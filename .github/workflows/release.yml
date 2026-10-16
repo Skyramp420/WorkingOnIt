@@ -1,0 +1,79 @@
+# Vydanie novej verzie: stačí pushnúť tag, napr. v1.6.0 (alebo v1.7.0-beta.1 pre testovaciu verziu).
+# GitHub postaví inštalačku pre Windows, nahrá ju do Releases a appky sa podľa nej samy aktualizujú.
+name: Vydanie
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    # Ak podpisuješ a vydávaš z vlastného PC (napr. Certum), nastav v repozitári premennú LOCAL_RELEASE = 1.
+    # GitHub potom inštalačku nestavia (neprepíše tvoju podpísanú) a nasadí len mobilnú verziu.
+    env:
+      SKIP: ${{ vars.LOCAL_RELEASE == '1' }}
+    steps:
+      - uses: actions/checkout@v7
+        if: env.SKIP != 'true'
+
+      - uses: actions/setup-node@v7
+        if: env.SKIP != 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+        if: env.SKIP != 'true'
+
+      - name: Testy
+        if: env.SKIP != 'true'
+        run: node test/run-tests.js
+
+      - name: Adresa mobilnej verzie
+        if: env.SKIP != 'true'
+        run: node scripts/mobile-url.js
+
+      - name: Inštalačka a vydanie
+        if: env.SKIP != 'true'
+        run: npx electron-builder --win nsis --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # testovacie verzie (tag s pomlčkou, napr. v1.7.0-beta.1) idú ako prerelease: dostanú ich len tí, čo si zapli beta verzie
+          EP_PRE_RELEASE: ${{ contains(github.ref_name, '-') }}
+          # Podpisovanie (keď ho budeš mať, viď VYDANIE.md):
+          # Azure Artifact Signing
+          # AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          # AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          # AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          # alebo certifikát vo formáte .pfx (len ak ti ho CA vydá aj tak)
+          # CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+  mobile:
+    # mobilná verzia ako verejná stránka (bez dát) na GitHub Pages
+    runs-on: ubuntu-latest
+    needs: windows
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # len písmo a pod., Electron netreba sťahovať
+      - run: npm ci --ignore-scripts
+      - name: Pripraviť stránku
+        run: node scripts/build-mobile-web.js
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web
+      - uses: actions/deploy-pages@v5

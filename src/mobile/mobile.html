@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<title>WorkingOnIt</title>
+<style>
+:root {
+  --ink: #0a0d1c; --panel: #141a38; --raise: #1a2045; --line: #2d3569;
+  --glass: rgba(26, 32, 72, .55); --glass-line: rgba(160, 175, 255, .13);
+  --text: #eaedff; --muted: #9aa3d4; --faint: #646d9e;
+  --accent: #6ee7c8; --rec: #ff6b8b; --amber: #ffd27a; --lilac: #b9a4ff; --mint: #6ee7b7; --pink: #f9a8d4;
+  --s-todo: var(--lilac); --s-working: var(--amber); --s-review: #7cc4ff; --s-revisions: var(--pink); --s-done: var(--mint);
+  --display: 'Fredoka', system-ui, sans-serif;
+  --ease: cubic-bezier(.2, .85, .25, 1); --spring: cubic-bezier(.34, 1.56, .64, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; color: var(--text); font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+html { background: var(--ink); }
+body { min-height: 100vh; padding: env(safe-area-inset-top) 0 calc(80px + env(safe-area-inset-bottom)); }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 40% at 0% 0%, rgba(45,212,191,.2), transparent 70%), radial-gradient(60% 35% at 100% 0%, rgba(139,92,246,.22), transparent 70%), radial-gradient(60% 30% at 70% 100%, rgba(236,72,153,.12), transparent 70%); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:active { transform: scale(.97); }
+header { padding: 16px 18px 6px; display: flex; align-items: center; gap: 10px; }
+header h1 { font: 700 21px var(--display); margin: 0; flex: 1; letter-spacing: -.01em; }
+.conn { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); transition: background .3s, box-shadow .3s; }
+.conn.ok { background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+main { padding: 0 16px; }
+.view[hidden] { display: none; }
+.view { animation: fade .28s var(--ease); }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+.glass { background: var(--glass); border: 1px solid var(--glass-line); border-radius: 20px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+h2 { font: 700 17px var(--display); margin: 22px 4px 8px; display: flex; align-items: center; gap: 8px; }
+h2 span { color: var(--muted); font: 600 13px system-ui; }
+/* Dnes */
+.hero { display: flex; gap: 12px; align-items: center; padding: 14px 16px 14px 10px; margin-top: 6px; }
+.hero .kitbox { width: 78px; height: 78px; flex: none; }
+.hero b { font: 700 19px var(--display); display: block; }
+.hero p { margin: 4px 0 0; color: var(--muted); font-size: 14px; transition: opacity .14s; }
+.hero .kitbox { cursor: pointer; }
+.hero p strong { color: var(--text); }
+.rec { margin-top: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+.rec .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); flex: none; color: var(--rec); }
+.rec.on .dot { background: var(--rec); animation: ff 2.2s ease-in-out infinite; }
+.rec.away .dot { background: var(--amber); color: var(--amber); }
+@keyframes ff { 0%, 100% { box-shadow: 0 0 4px 1px currentColor; } 50% { box-shadow: 0 0 14px 5px currentColor; } }
+.rec .tc { font: 600 17px ui-monospace, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+.rec.away .tc { color: var(--amber); }
+.rec .meta { flex: 1; min-width: 0; line-height: 1.25; }
+.rec .meta b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec .meta span { font-size: 12px; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.stat { padding: 11px 12px; border-radius: 16px; }
+.stat small { color: var(--muted); font-size: 12px; display: block; }
+.stat b { font: 700 19px var(--display); white-space: nowrap; }
+.goal { height: 4px; border-radius: 4px; background: rgba(5,7,20,.5); margin-top: 6px; overflow: hidden; }
+.goal i { display: block; height: 100%; background: var(--accent); border-radius: 4px; box-shadow: 0 0 8px var(--accent); }
+/* karty */
+.card { padding: 12px 14px 12px 20px; margin-bottom: 8px; position: relative; overflow: hidden; display: block; width: 100%; text-align: left; border-radius: 18px; transition: transform .15s; }
+.card::before { content: ''; position: absolute; left: 8px; top: 13px; bottom: 13px; width: 3px; border-radius: 3px; background: var(--c); box-shadow: 0 0 10px var(--c); }
+.card h3 { margin: 0; font: 700 16px/1.25 var(--display); }
+.card .who { color: var(--muted); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 8px; background: rgba(5, 7, 20, .45); color: var(--muted); }
+.chip.overdue { color: #ffd2d8; background: rgba(255, 107, 139, .25); }
+.chip.today, .chip.soon { color: var(--amber); }
+.chip.live { color: var(--rec); }
+.chip.owed { color: var(--amber); }
+.empty { color: var(--muted); text-align: center; padding: 30px 10px; }
+/* detail */
+.sheet { position: fixed; inset: 0; z-index: 20; background: var(--ink); overflow: auto; padding: env(safe-area-inset-top) 16px calc(40px + env(safe-area-inset-bottom)); animation: up .32s var(--ease); overscroll-behavior: contain; }
+.sheet::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(80% 32% at 20% 0%, color-mix(in srgb, var(--c) 28%, transparent), transparent 70%); }
+.sheet.out { animation: down .22s ease-in forwards; }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+@keyframes down { to { transform: translateY(40px); opacity: 0; } }
+.sheet .top { display: flex; align-items: center; gap: 8px; padding: 12px 0 6px; }
+.sheet h1 { font: 700 27px/1.15 var(--display); margin: 8px 0 4px; }
+.st { display: flex; gap: 4px; padding: 4px; border-radius: 14px; overflow-x: auto; margin-top: 14px; scrollbar-width: none; }
+.st button { flex: 1; border: 0; background: none; color: var(--muted); border-radius: 10px; padding: 9px 9px; font-size: 13px; font-weight: 700; white-space: nowrap; transition: background .2s, color .2s; }
+.st button.on { background: color-mix(in srgb, var(--c) 22%, var(--raise)); color: var(--c); }
+.btn { border: 1px solid var(--glass-line); background: var(--glass); border-radius: 12px; padding: 9px 13px; font-weight: 700; font-size: 14px; }
+.btn.primary { background: var(--accent); color: #062521; border-color: transparent; }
+.btn.small { padding: 7px 11px; font-size: 13px; }
+.btn.rec-on { color: var(--rec); }
+.row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.note { display: flex; gap: 8px; margin-top: 12px; }
+.note input { flex: 1; min-width: 0; background: rgba(5,7,20,.45); border: 1px solid var(--glass-line); border-radius: 12px; padding: 10px 12px; outline: 0; }
+.note input:focus { border-color: var(--accent); }
+.notes { padding: 14px 16px; margin-top: 4px; font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.notes h1, .notes h2, .notes h3 { font-family: var(--display); margin: 12px 0 4px; font-size: 18px; display: block; }
+.notes p { margin: 0 0 6px; }
+.notes img { max-width: 100%; border-radius: 12px; margin: 8px 0; display: block; }
+.notes ul, .notes ol { padding-left: 20px; margin: 4px 0 8px; }
+.notes ul.todo { list-style: none; padding-left: 2px; }
+.notes ul.todo li::before { content: '○'; color: var(--faint); display: inline-block; width: 1.2em; text-decoration: none; }
+.notes ul.todo li[data-done="1"], .notes ul.todo li.done { color: var(--muted); text-decoration: line-through; }
+.notes ul.todo li[data-done="1"]::before, .notes ul.todo li.done::before { content: '●'; color: var(--mint); }
+.notes blockquote { margin: 6px 0; padding-left: 12px; border-left: 3px solid var(--accent); color: var(--muted); }
+.notes pre { white-space: pre-wrap; font: 13px ui-monospace, Consolas, monospace; background: rgba(5,7,20,.5); padding: 8px 10px; border-radius: 10px; }
+.notes a { color: var(--accent); }
+.notes hr { border: 0; border-top: 1px solid var(--glass-line); margin: 12px 0; }
+.check { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 6px; border-radius: 14px; width: 100%; text-align: left; }
+.check i { width: 18px; height: 18px; border-radius: 6px; border: 1.6px solid var(--line); flex: none; transition: background .2s, border-color .2s; }
+.check.done i { background: var(--mint); border-color: var(--mint); }
+.check.done span { color: var(--muted); text-decoration: line-through; }
+/* Kit */
+.chat { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; padding-bottom: 84px; }
+.msg { max-width: 88%; padding: 10px 13px; border-radius: 18px; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; animation: pop .25s var(--ease); }
+@keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.98); } }
+.msg.user { align-self: flex-end; background: var(--accent); color: #062521; border-bottom-right-radius: 6px; white-space: pre-wrap; }
+.msg.assistant { align-self: flex-start; border-bottom-left-radius: 6px; }
+.msg p { margin: 0 0 6px; } .msg p:last-child { margin: 0; }
+.msg ul { margin: 4px 0; padding-left: 18px; }
+.msg code { font: 13px ui-monospace, Consolas, monospace; background: rgba(5,7,20,.5); padding: 1px 5px; border-radius: 5px; }
+.msg pre { white-space: pre-wrap; font: 12.5px ui-monospace, Consolas, monospace; background: rgba(5,7,20,.5); padding: 8px 10px; border-radius: 10px; }
+.caret { display: inline-block; width: 7px; height: 15px; background: var(--accent); border-radius: 2px; vertical-align: -2px; animation: bl 1s steps(1) infinite; margin-left: 2px; }
+@keyframes bl { 50% { opacity: 0; } }
+.sugg { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.sugg button { border: 1px solid var(--glass-line); background: var(--glass); border-radius: 20px; padding: 8px 13px; font-size: 13.5px; }
+.ctx { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); padding: 5px 6px 5px 11px; border-radius: 20px; }
+.ctx b { color: var(--text); }
+.ctx button { border: 0; background: rgba(5,7,20,.45); border-radius: 50%; width: 22px; height: 22px; padding: 0; line-height: 22px; color: var(--muted); }
+.kit-hello { text-align: center; color: var(--muted); padding: 18px 10px 8px; }
+.kit-hello .kitbox { width: 120px; height: 120px; margin: 0 auto 6px; }
+.kit-hello b { display: block; color: var(--text); font: 700 19px var(--display); margin-bottom: 4px; }
+.composer { position: fixed; left: 0; right: 0; bottom: calc(66px + env(safe-area-inset-bottom)); padding: 10px 12px 8px; display: flex; gap: 8px; align-items: flex-end; background: linear-gradient(transparent, var(--ink) 35%); z-index: 9; }
+.composer[hidden] { display: none; }
+.composer textarea { flex: 1; resize: none; background: var(--panel); border: 1px solid var(--glass-line); border-radius: 18px; padding: 10px 14px; outline: 0; max-height: 120px; line-height: 1.4; }
+.composer textarea:focus { border-color: var(--accent); }
+.composer .btn { border-radius: 18px; padding: 10px 15px; }
+/* Nová */
+textarea.paste { width: 100%; min-height: 170px; background: var(--glass); border: 1.5px dashed var(--line); border-radius: 18px; padding: 12px 14px; outline: 0; resize: vertical; }
+textarea.paste:focus { border-color: var(--accent); border-style: solid; }
+.preview { padding: 10px 14px; margin-top: 10px; font-size: 14px; animation: fade .2s ease; }
+.preview div { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; }
+.preview div span { color: var(--muted); }
+.mseg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; margin: 6px 0 12px; }
+.mseg button { flex: 1; border: 0; background: none; color: var(--muted); border-radius: 10px; padding: 9px; font-weight: 700; font-size: 14px; }
+.mseg button.on { background: var(--raise); color: var(--text); box-shadow: inset 0 0 0 1px var(--glass-line); }
+.lead2 { color: var(--muted); margin: 0 4px 12px; font-size: 14px; }
+.photo { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.photo img { max-width: 100%; max-height: 260px; border-radius: 14px; }
+.row .grow { flex: 1; }
+label.btn { display: inline-flex; align-items: center; }
+.idea-m { padding: 12px 14px; margin-bottom: 8px; border-radius: 18px; display: flex; gap: 12px; align-items: flex-start; }
+.idea-m img { width: 64px; height: 48px; object-fit: cover; border-radius: 10px; flex: none; }
+.idea-m b { font: 700 15px var(--display); display: block; }
+.idea-m p { margin: 2px 0 0; color: var(--muted); font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; background: rgba(10, 13, 28, .86); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid var(--glass-line); padding: 7px 10px calc(7px + env(safe-area-inset-bottom)); gap: 6px; }
+nav button { flex: 1; border: 0; background: none; color: var(--muted); padding: 7px 4px; border-radius: 14px; font-weight: 700; font-size: 12.5px; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: background .2s, color .2s; }
+nav button svg { width: 21px; height: 21px; transition: transform .25s var(--ease); }
+nav button.on { color: var(--text); background: var(--glass); }
+nav button.on svg { color: var(--accent); filter: drop-shadow(0 0 6px rgba(110,231,200,.6)); transform: translateY(-1px) scale(1.06); }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 30; background: var(--raise); border: 1px solid var(--glass-line); border-radius: 14px; padding: 12px 14px; animation: up .3s var(--ease); box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+.toast.out { animation: down .2s ease-in forwards; }
+/* Kit maskot (rovnaké pravidlá ako na PC) */
+.kit { width: 100%; height: 100%; overflow: visible; }
+.kit .ear-l { transform-origin: 30px 30px; animation: earl 6s ease-in-out infinite; }
+.kit .ear-r { transform-origin: 70px 30px; animation: earr 7.5s ease-in-out infinite; }
+.kit .eyes { transform-origin: 50px 56px; animation: blink 5s infinite; transition: opacity .25s; }
+.kit .tail { transform-origin: 78px 88px; animation: tail 3.2s ease-in-out infinite; }
+.kit .head { transform-origin: 50px 90px; transition: transform .4s var(--spring); }
+.kit .happy-eyes, .kit .sleep-eyes, .kit .sweat, .kit .zz, .kit .phones { opacity: 0; transition: opacity .25s; }
+.kit.happy .eyes { opacity: 0; } .kit.happy .happy-eyes { opacity: 1; }
+.kit.happy .head { animation: hop .6s var(--spring) 2; }
+.kit.sleepy .eyes { opacity: 0; } .kit.sleepy .sleep-eyes, .kit.sleepy .zz { opacity: 1; }
+.kit.sleepy .head { transform: rotate(-6deg) translateY(2px); }
+.kit.sleepy .zz { animation: zz 2.4s ease-in-out infinite; }
+.kit.worried .sweat { opacity: 1; }
+.kit.focused .phones, .kit.has-phones .phones { opacity: 1; }
+.kit.boop .head { animation: squish .45s var(--spring); }
+.kit .sparkle { animation: twinkle 2.6s ease-in-out infinite; transform-origin: 50% 50%; }
+.kit .aura { animation: auraPulse 4s ease-in-out infinite; transform-origin: 50px 58px; }
+@keyframes earl { 0%, 88%, 100% { transform: rotate(0); } 92% { transform: rotate(-12deg); } 96% { transform: rotate(4deg); } }
+@keyframes earr { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(10deg); } 90% { transform: rotate(-3deg); } }
+@keyframes blink { 0%, 46%, 50%, 100% { transform: scaleY(1); } 48% { transform: scaleY(.1); } }
+@keyframes tail { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(8deg); } }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9px) rotate(-3deg); } }
+@keyframes zz { 0% { transform: translate(0, 0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(6px, -10px); opacity: 0; } }
+@keyframes squish { 0% { transform: scale(1); } 30% { transform: scale(1.08, .9); } 60% { transform: scale(.96, 1.05); } 100% { transform: scale(1); } }
+@keyframes twinkle { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes auraPulse { 0%, 100% { transform: scale(.94); opacity: .12; } 50% { transform: scale(1.04); opacity: .24; } }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+/* ---------- Lampa: teplá tma, papierové kartičky (ako na PC) ---------- */
+@font-face { font-family: 'Bricolage'; font-display: swap; font-weight: 200 800; font-stretch: 75% 100%; src: url(fonts/bricolage-latin-ext.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Bricolage'; font-display: swap; font-weight: 200 800; font-stretch: 75% 100%; src: url(fonts/bricolage-latin.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root {
+  --ink: #1c1713; --panel: #241e19; --raise: #2e2721; --line: #4b3f35;
+  --glass: #241e19; --glass-line: #352d26;
+  --text: #efe8dc; --muted: #ad9f90; --faint: #807366;
+  --accent: #f07f2c; --rec: #e8574a; --amber: #eab54d; --lilac: #b8b4ea; --mint: #a3c08a; --pink: #e693a9;
+  --s-todo: #c7ccd4; --s-working: #ebc65c; --s-review: #86b5e0; --s-revisions: #e693a9; --s-done: #a3c08a;
+  --paper-todo: #eef0f0; --paper-working: #f5e3a3; --paper-review: #d2e2f0; --paper-revisions: #f2cbd5; --paper-done: #d8e3ca;
+  --display: 'Bricolage', system-ui, sans-serif;
+}
+html, body { font-family: 'Bricolage', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+html { background: radial-gradient(120% 60% at 0% 0%, rgba(255,176,100,.12), transparent 70%), var(--ink); }
+body::before { display: none; }
+.glass { background: var(--panel); border: 1px solid var(--glass-line); backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 16px; }
+header h1, h2, .hero b, .stat b, .card h3, .sheet h1, .kit-hello b, .idea-m b { font-stretch: 88%; letter-spacing: -.01em; }
+.conn.ok { box-shadow: none; }
+.goal i { box-shadow: none; }
+.rec.on .dot { animation: none; box-shadow: none; }
+.card { background: var(--pc, #eef0f0); color: #2a231e; border: 0; border-radius: 4px; padding: 11px 13px; box-shadow: 0 1px 0 rgba(0,0,0,.35), 0 10px 18px -10px rgba(0,0,0,.6); }
+.card::before { display: none; }
+.card h3 { color: #2a231e; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1.5px solid #d65a4f; }
+.card .who { color: #5d5147; }
+.card .chips { margin-top: 6px; }
+.card .chip { background: rgba(42,35,30,.08); color: #5d5147; }
+.card .chip.overdue { background: rgba(194,55,47,.14); color: #b2401f; font-weight: 700; }
+.card .chip.today, .card .chip.soon, .card .chip.owed { color: #94570f; font-weight: 700; }
+.card .chip.live { color: #b2401f; font-weight: 700; }
+.st button.on { background: var(--c); color: #1f1915; }
+.btn { background: transparent; border: 1px solid var(--line); border-radius: 999px; }
+.btn.primary { background: var(--accent); color: #1f1610; border-color: transparent; }
+.msg.user { background: var(--accent); color: #1f1610; }
+.sugg button { background: transparent; border-color: var(--line); }
+.mseg button.on { background: var(--raise); box-shadow: none; }
+nav { background: rgba(28, 23, 19, .94); backdrop-filter: none; -webkit-backdrop-filter: none; border-top: 1px solid var(--glass-line); }
+nav button.on { background: none; }
+nav button.on svg { color: var(--accent); filter: none; transform: none; }
+.sheet { background: var(--ink); }
+.sheet::before { display: none; }
+.toast { background: var(--raise); border-color: var(--line); }
+[hidden] { display: none !important; }
+.who-am-i { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 28px 2px 6px; padding-top: 14px; border-top: 1px solid var(--glass-line); color: var(--muted); font-size: 13px; }
+.who-am-i span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-am-i .btn { flex: none; }
+/* prihlásenie (online režim) */
+.login { padding: 20px 4px; }
+.login .kitbox { width: 96px; height: 96px; margin: 6px auto 4px; }
+.login h2 { justify-content: center; font-size: 22px; margin: 6px 0; }
+.login p { color: var(--muted); text-align: center; margin: 0 6px 16px; font-size: 14px; }
+.login label { display: block; color: var(--muted); font-size: 13px; margin: 12px 4px 5px; }
+.login input { width: 100%; background: rgba(0,0,0,.22); border: 1px solid var(--glass-line); border-radius: 12px; padding: 12px 13px; outline: 0; }
+.login input:focus { border-color: var(--accent); }
+.login .btn { width: 100%; margin-top: 18px; padding: 12px; }
+.login .err { color: var(--rec); text-align: center; min-height: 1.2em; margin-top: 10px; font-size: 14px; }
+/* ---------- Čistá: rovnaký jazyk ako iPhone (svetlý/tmavý podľa telefónu) ---------- */
+@font-face { font-family: 'Inter Variable'; font-display: swap; font-weight: 100 900; src: url(fonts/inter-latin-ext.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Inter Variable'; font-display: swap; font-weight: 100 900; src: url(fonts/inter-latin.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root {
+  --ink: #f2f2f7; --panel: #ffffff; --raise: #ffffff; --line: #c6c6c8;
+  --glass: #ffffff; --glass-line: rgba(60, 60, 67, .13); --fill: rgba(120, 120, 128, .12); --fill2: rgba(120, 120, 128, .2);
+  --text: #1d1d1f; --muted: #6e6e73; --faint: #aeaeb2;
+  --accent: #ff9500; --on-accent: #fff; --rec: #ff3b30; --amber: #c27c00; --lilac: #af52de; --mint: #34c759; --pink: #ff2d55;
+  --s-todo: #8e8e93; --s-working: #ffcc00; --s-review: #007aff; --s-revisions: #af52de; --s-done: #34c759;
+  --material: rgba(249, 249, 249, .8); --shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
+  --display: -apple-system, 'SF Pro Display', 'Inter Variable', system-ui, sans-serif;
+  --ease: cubic-bezier(.25, .9, .3, 1); --spring: cubic-bezier(.32, 1.25, .5, 1);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --ink: #000000; --panel: #1c1c1e; --raise: #2c2c2e; --line: #38383a;
+  --glass: #1c1c1e; --glass-line: rgba(84, 84, 88, .45); --fill: rgba(118, 118, 128, .24); --fill2: rgba(118, 118, 128, .32);
+  --text: #ffffff; --muted: #98989f; --faint: #636366;
+  --accent: #ff9f0a; --on-accent: #1d1d1f; --rec: #ff453a; --amber: #ffb340; --lilac: #bf5af2; --mint: #30d158; --pink: #ff375f;
+  --s-todo: #8e8e93; --s-working: #ffd60a; --s-review: #0a84ff; --s-revisions: #bf5af2; --s-done: #30d158;
+  --material: rgba(22, 22, 24, .78); --shadow: none;
+} }
+html, body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+html { background: var(--ink); }
+button:active { transform: none; opacity: .6; transition: opacity 0s; }
+button { transition: opacity .25s; }
+header { padding: 14px 20px 2px; }
+header h1 { font: 700 30px/1.15 var(--display); letter-spacing: -.02em; }
+main { padding: 0 16px; }
+.glass { background: var(--panel); border: 0; border-radius: 14px; box-shadow: var(--shadow); }
+h2 { font: 600 20px var(--display); letter-spacing: -.01em; margin: 26px 4px 8px; }
+h2 span { font: 400 15px -apple-system, 'Inter Variable', system-ui; color: var(--muted); }
+header h1, h2, .hero b, .stat b, .card h3, .sheet h1, .kit-hello b, .idea-m b { font-stretch: 100%; }
+.hero b, .stat b, .kit-hello b { font-family: var(--display); font-weight: 650; letter-spacing: -.01em; }
+.stat { border-radius: 14px; }
+.stat b { font-variant-numeric: tabular-nums; }
+.goal { background: var(--fill); }
+.goal i { box-shadow: none; }
+.conn.ok { box-shadow: none; }
+.rec .tc { font: 600 17px -apple-system, 'Inter Variable', system-ui; font-variant-numeric: tabular-nums; }
+.rec.on .dot { animation: recp 2s ease-in-out infinite; box-shadow: none; }
+@keyframes recp { 50% { opacity: .35; } }
+.card { background: var(--panel); color: var(--text); border: 0; border-radius: 14px; padding: 12px 16px 12px 30px; box-shadow: var(--shadow); transition: transform .3s var(--spring); }
+.card:active { transform: scale(.98); opacity: 1; }
+.card::before { display: block; left: 13px; top: 18px; bottom: auto; width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: none; }
+.card h3 { color: var(--text); font: 600 16px/1.3 -apple-system, 'Inter Variable', system-ui; letter-spacing: -.01em; padding: 0; margin: 0 0 1px; border: 0; }
+.card .who { color: var(--muted); font-size: 14px; }
+.card .chips { margin-top: 7px; }
+.chip, .card .chip { background: var(--fill); color: var(--muted); border-radius: 6px; padding: 2px 7px; font-size: 12.5px; font-weight: 500; }
+.chip.overdue, .card .chip.overdue { background: color-mix(in srgb, var(--rec) 14%, transparent); color: var(--rec); font-weight: 600; }
+.chip.today, .chip.soon, .chip.owed, .card .chip.today, .card .chip.soon, .card .chip.owed { color: var(--amber); font-weight: 600; }
+.chip.live, .card .chip.live { color: var(--rec); font-weight: 600; }
+.sheet { background: var(--ink); animation: up .42s var(--ease); }
+.sheet::before { display: none; }
+.sheet h1 { font: 700 28px/1.15 var(--display); letter-spacing: -.02em; }
+@keyframes up { from { transform: translateY(60px); opacity: 0; } }
+.st { background: var(--fill); box-shadow: none; border-radius: 9px; padding: 2px; gap: 0; }
+.st button { border-radius: 7px; padding: 7px 8px; font-weight: 500; color: var(--text); transition: background .25s, box-shadow .25s; }
+.st button.on { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); }
+.st button.on::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 1px; }
+@media (prefers-color-scheme: dark) { .st button.on { background: #636366; } }
+.btn { background: var(--fill); color: var(--accent); border: 0; border-radius: 10px; font-weight: 600; padding: 9px 14px; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.rec-on { color: var(--rec); }
+.note input, .login input, .composer textarea, textarea.paste { background: var(--panel); border: 0; box-shadow: var(--shadow); border-radius: 10px; }
+.note input:focus, .login input:focus, .composer textarea:focus, textarea.paste:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); border: 0; }
+textarea.paste { border-radius: 14px; }
+.composer { background: linear-gradient(transparent, var(--ink) 40%); }
+.composer textarea { border-radius: 20px; }
+.composer .btn { border-radius: 20px; }
+.notes { line-height: 1.55; }
+.notes pre, .msg code, .msg pre { background: var(--fill); }
+.notes ul.todo li[data-done="1"]::before, .notes ul.todo li.done::before { color: var(--mint); }
+.check { background: var(--panel); }
+.check i { border-radius: 50%; border-color: var(--faint); }
+.msg { border-radius: 20px; }
+.msg.user { background: var(--accent); color: var(--on-accent); }
+.msg.assistant { background: var(--panel); }
+.sugg button { background: var(--panel); border: 0; color: var(--accent); font-weight: 500; box-shadow: var(--shadow); }
+.ctx { background: var(--panel); }
+.ctx button { background: var(--fill); }
+.mseg { background: var(--fill); border-radius: 9px; padding: 2px; gap: 0; box-shadow: none; }
+.mseg button { border-radius: 7px; padding: 7px; font-weight: 500; color: var(--text); }
+.mseg button.on { background: var(--panel); box-shadow: 0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); font-weight: 600; }
+@media (prefers-color-scheme: dark) { .mseg button.on { background: #636366; } }
+.idea-m { border-radius: 14px; }
+.idea-m b { font: 600 15px -apple-system, 'Inter Variable', system-ui; }
+nav { background: var(--material); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: .5px solid var(--glass-line); padding: 6px 8px calc(4px + env(safe-area-inset-bottom)); gap: 0; }
+nav button { color: #8e8e93; font-weight: 500; font-size: 10.5px; gap: 2px; padding: 4px 2px; border-radius: 0; }
+nav button svg { width: 24px; height: 24px; }
+nav button.on { background: none; color: var(--accent); }
+nav button.on svg { color: var(--accent); filter: none; transform: none; animation: tabpop .38s var(--spring); }
+@keyframes tabpop { 40% { transform: scale(.86); } }
+.toast { background: var(--material); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 0; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.who-am-i { border-top: .5px solid var(--glass-line); }
+.sh .sdot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.chip.type { color: var(--text); background: color-mix(in srgb, var(--c) 24%, transparent); font-weight: 600; }
+</style>
+</head>
+<body>
+<header><h1>WorkingOnIt</h1><i class="conn" id="conn" title="Spojenie" data-t-attrs="title"></i></header>
+<main>
+  <section class="view" id="v-login" hidden><div class="login">
+    <div class="kitbox" id="loginKit"></div><h2 data-t>Prihlás sa</h2>
+    <p data-t>Do svojej databázy WorkingOnIt. Kód nájdeš v appke na PC: Nastavenia → Online databáza.</p>
+    <label for="lgCode" data-t>Kód na pripojenie</label><input id="lgCode" placeholder="WOI1.…" autocomplete="off">
+    <label for="lgEmail" data-t>E-mail</label><input id="lgEmail" type="email" autocomplete="username">
+    <label for="lgPass" data-t>Heslo</label><input id="lgPass" type="password" autocomplete="current-password">
+    <button class="btn primary" id="lgGo" data-t>Prihlásiť sa</button><div class="err" id="lgErr"></div>
+  </div></section>
+  <section class="view" id="v-today"><div class="empty" data-t>Pripájam sa…</div></section>
+  <section class="view" id="v-jobs" hidden></section>
+  <section class="view" id="v-kit" hidden><div class="chat" id="chat"></div></section>
+  <section class="view" id="v-new" hidden>
+    <div class="mseg glass"><button data-nk="job" class="on" data-t>Zákazka</button><button data-nk="idea" data-t>Nápad</button></div>
+    <div id="newJob">
+      <p class="lead2" data-t>Skopíruj správu od klienta (Discord, mail…) a vlož ju sem. Zvyšok doplním a na PC založím aj priečinok.</p>
+      <textarea class="paste" id="paste" placeholder="Klient — dnes o 18:22&#10;Ahoj, spravíš mi intro? Budget 40 €, do piatku." data-t-attrs="placeholder"></textarea>
+      <div class="preview glass" id="preview" hidden></div>
+      <div class="row"><button class="btn primary" id="create" data-t>Pridať zákazku</button></div>
+    </div>
+    <div id="newIdea" hidden>
+      <p class="lead2" data-t>Napadlo ťa niečo? Zapíš si to, pokojne aj s fotkou. Na PC to nájdeš v Nápadoch.</p>
+      <textarea class="paste" id="ideaText" placeholder="Napr. prechod cez dvere ako v tom klipe, glitch na beat…" data-t-attrs="placeholder"></textarea>
+      <div class="photo" id="photoBox" hidden><img id="photoImg" alt=""><button class="btn small" id="photoX" data-t>Odstrániť</button></div>
+      <div class="row"><label class="btn" for="photoIn" data-t>Pridať fotku</label><input type="file" accept="image/*" id="photoIn" hidden><span class="grow"></span><button class="btn primary" id="saveIdea" data-t>Uložiť nápad</button></div>
+      <div id="ideasList"></div>
+    </div>
+  </section>
+</main>
+<div class="composer" id="composer" hidden><textarea id="kitIn" rows="1" placeholder="Napíš Kitovi…" enterkeyhint="send"></textarea><button class="btn primary" id="kitSend" data-t>Poslať</button></div>
+<nav>
+  <button data-v="today" class="on"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.5" fill="currentColor"/><path d="M10 1.5v2.5M10 16v2.5M1.5 10H4M16 10h2.5M4 4l1.8 1.8M14.2 14.2L16 16M4 16l1.8-1.8M14.2 5.8L16 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span data-t>Dnes</span></button>
+  <button data-v="jobs"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="4.5" height="14" rx="1.5" fill="currentColor"/><rect x="7.75" y="3" width="4.5" height="9" rx="1.5" fill="currentColor"/><rect x="13.5" y="3" width="4.5" height="11" rx="1.5" fill="currentColor"/></svg><span data-t>Zákazky</span></button>
+  <button data-v="kit"><svg viewBox="0 0 20 20"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h7A2.5 2.5 0 0 1 16 5.5v5a2.5 2.5 0 0 1-2.5 2.5H9l-4 3.5V13A2.5 2.5 0 0 1 4 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span id="navKit">Kit</span></button>
+  <button data-v="new"><svg viewBox="0 0 20 20"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span data-t>Nová</span></button>
+</nav>
+<script src="shared/i18n.js"></script>
+<script src="shared/lang-en.js"></script>
+<script src="shared/logic.js"></script>
+<script src="shared/parse.js"></script>
+<script src="shared/sbclient.js"></script>
+<script src="shared/syncmodel.js"></script>
+<script src="renderer/mascot.js"></script>
+<script src="renderer/rte.js"></script>
+<script src="renderer/kit.js"></script>
+<script src="mobile/cloud.js"></script>
+<script>
+(function () {
+  const L = window.WOI;
+  const t = (s, v) => I18N.t(s, v), tp = (n, a, b, c, v) => I18N.tp(n, a, b, c, v);
+  // jazyk: kým nemáme dáta, podľa telefónu; potom podľa nastavení appky
+  I18N.setLang('', navigator.language); I18N.apply(document);
+  function useLang(d) {
+    const st = (d && d.settings) || {};
+    if (st.currency && st.currency !== I18N.currency) I18N.setCurrency(st.currency);
+    if (!I18N.LANGS.some(l => l.id === st.language) || st.language === I18N.lang) return false;
+    I18N.setLang(st.language, navigator.language); I18N.apply(document);
+    return true;
+  }
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* dva režimy: z PC cez wifi (server v appke) alebo online (GitHub Pages, priamo z vlastnej databázy) */
+  const CLOUD = !!window.WOI_CLOUD;
+  let D = null, skew = 0, tcT = null, view = 'today', openId = null, boopHold = 0;
+  const P = id => D.projects.find(p => p.id === id);
+  const sColor = id => `var(--s-${id})`;
+  const kitName = () => (D && D.settings.mascotName) || 'Kit';
+  const now = () => Date.now() + skew;
+
+  async function act(type, payload) {
+    if (CLOUD) {
+      try { return await Cloud.act(type, payload); }
+      catch (e) { toast(e.message); throw e; }
+    }
+    try {
+      const r = await fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, payload }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || t('Nepodarilo sa'));
+      return j.result;
+    } catch (e) { toast(e.message === 'Failed to fetch' ? t('PC je offline') : e.message); throw e; }
+  }
+  function toast(msg) {
+    $$('.toast').forEach(x => x.remove());
+    const e = document.createElement('div'); e.className = 'toast'; e.textContent = msg; document.body.appendChild(e);
+    setTimeout(() => { e.classList.add('out'); setTimeout(() => e.remove(), 220); }, 2300);
+  }
+  function kit(el, mood) {
+    if (!el || !window.Mascot) return;
+    Mascot.configure((D && D.settings.kit) || {});
+    Mascot.mount(el);
+    if (mood) Mascot.setMood(el, mood);
+  }
+
+  /* ---------- Dnes ---------- */
+  let boopText = '', boopT = null;
+  function kitLine() {
+    const act_ = D.projects.filter(p => L.isActive(p, D.settings));
+    const over = act_.filter(p => L.deadlineInfo(p).level === 'overdue');
+    const today = act_.filter(p => L.deadlineInfo(p).level === 'today');
+    const review = act_.filter(p => p.status === 'review');
+    const owed = D.projects.filter(p => p.status === 'done' && L.owedOf(p) > 0);
+    const h = new Date().getHours();
+    const hi = h < 5 ? t('Ešte hore') : h < 10 ? t('Dobré ráno') : h < 18 ? t('Ahoj') : t('Dobrý večer');
+    if (over.length) return { mood: 'worried', hi, text: t('<strong>{title}</strong> je po termíne. Napíš {who}, kedy to bude.', { title: esc(over[0].title), who: esc(over[0].client ? L.decl(over[0].client, 'dat') : t('klientovi')) }) };
+    if (today.length) return { mood: 'worried', hi, text: t('Dnes odovzdávaš <strong>{title}</strong>.', { title: esc(today[0].title) }) + (today.length > 1 ? tp(today.length - 1, ' A ešte {n} ďalšiu.', ' A ešte {n} ďalšie.', ' A ešte {n} ďalších.') : t(' Zvládneš to.')) };
+    if (review.length) return { mood: '', hi, text: t('<strong>{title}</strong> čaká na feedback od klienta.', { title: esc(review[0].title) }) };
+    if (owed.length) return { mood: '', hi, text: t('{client} ti ešte dlhuje <strong>{m}</strong>.', { client: esc(owed[0].client || t('Klient')), m: L.formatMoney(L.owedOf(owed[0])) }) };
+    if (!act_.length) return { mood: h >= 22 || h < 5 ? 'sleepy' : 'happy', hi, text: t('Nič nehorí. Užívaj si voľno.') };
+    return { mood: 'happy', hi, text: t('Máš {n} {jobs}, nič nehorí.', { n: act_.length, jobs: L.plural(act_.length, 'aktívnu zákazku', 'aktívne zákazky', 'aktívnych zákaziek') }) };
+  }
+  function isLive(p) { return D.live && (D.live.mode === 'auto' || D.live.mode === 'manual') && D.live.projectId === p.id; }
+  function card(p) {
+    const d = L.deadlineInfo(p), owed = L.owedOf(p);
+    return `<button class="card glass" data-open="${p.id}" style="--c:${sColor(p.status)}"><h3>${esc(p.title)}</h3><div class="who">${esc([p.client, p.type && t(p.type)].filter(Boolean).join(', '))}</div>
+      <div class="chips">${isLive(p) ? '<span class="chip live">● REC</span>' : ''}${p.deadline && p.status !== 'done' ? `<span class="chip ${d.level}">${esc(d.label)}</span>` : ''}${p.reward ? `<span class="chip${p.status === 'done' && owed ? ' owed' : ''}">${L.formatMoney(p.reward)}${owed ? '' : ' ✓'}</span>` : ''}</div></button>`;
+  }
+  function renderToday() {
+    const tn = now();
+    const line = kitLine();
+    const todayMs = L.msBetween(D, L.startOfDay(tn), tn + 1), weekMs = L.msBetween(D, L.startOfWeek(tn), tn + 1);
+    const owed = D.projects.filter(p => p.status === 'done' && L.owedOf(p) > 0);
+    const active = D.projects.filter(p => p.status !== 'done' && !L.isArchived(p, D.settings));
+    const hot = active.filter(p => p.deadline && ['overdue', 'today', 'soon'].includes(L.deadlineInfo(p).level)).sort((a, b) => a.deadline.localeCompare(b.deadline));
+    const next = active.filter(p => !hot.includes(p)).sort((a, b) => (a.deadline || '9').localeCompare(b.deadline || '9')).slice(0, 5);
+    const goalH = Number(D.settings.hourlyGoal) || 0;
+    $('#v-today').innerHTML = `
+      <div class="hero glass"><div class="kitbox" id="todayKit"></div><div><b>${line.hi}${D.settings.userName ? ', ' + esc(D.settings.userName) : ''}</b><p>${line.text}</p></div></div>
+      <div class="rec glass" id="rec"><i class="dot"></i><div class="tc" id="tc">00:00:00</div><div class="meta"><b id="recWhat"></b><span id="recSub"></span></div><button class="btn small" id="recStop" hidden>${t('Stop')}</button></div>
+      <div class="stats">
+        <div class="stat glass"><small>${t('Dnes')}</small><b>${L.formatDuration(todayMs, true)}</b></div>
+        <div class="stat glass"><small>${t('Týždeň')}</small><b>${L.formatDuration(weekMs, true)}</b>${goalH ? `<div class="goal"><i style="width:${Math.min(100, weekMs / 36e5 / goalH * 100).toFixed(0)}%"></i></div>` : ''}</div>
+        <div class="stat glass"><small>${t('Dlhujú ti')}</small><b style="color:${owed.length ? 'var(--amber)' : 'var(--text)'}">${L.formatMoney(owed.reduce((a, p) => a + L.owedOf(p), 0))}</b></div>
+      </div>
+      ${hot.length ? `<h2>${t('Horí')} <span>${hot.length}</span></h2>${hot.map(card).join('')}` : ''}
+      ${next.length ? `<h2>${hot.length ? t('Potom') : t('Na rade#next')}</h2>${next.map(card).join('')}` : ''}
+      ${owed.length ? `<h2>${t('Čaká sa na peniaze')}</h2>${owed.map(card).join('')}` : ''}
+      ${!active.length && !owed.length ? `<div class="empty">${t('Nič aktívne. Novú zákazku pridáš cez „Nová“.')}</div>` : ''}
+      ${CLOUD ? `<div class="who-am-i"><span>${esc(Cloud.email || t('Prihlásený'))}</span><button class="btn small" id="logout">${t('Odhlásiť sa')}</button></div>` : ''}`;
+    const lo = $('#logout'); if (lo) lo.onclick = () => { if (confirm(t('Odhlásiť sa z databázy v tomto telefóne? Dáta ostanú v databáze.'))) { Cloud.logout(); D = null; $('#conn').classList.remove('ok'); showLogin(); } };
+    kit($('#todayKit'), line.mood);
+    const hp = $('#v-today .hero p');
+    if (boopHold > Date.now() && boopText) hp.innerHTML = boopText;
+    $('#todayKit').onclick = () => {
+      if (!window.Kit) return;
+      const k = $('#todayKit .kit'); k.classList.remove('boop'); void k.getBBox(); k.classList.add('boop');
+      boopText = Kit.boopLine(D); boopHold = Date.now() + 4500;
+      hp.style.opacity = 0;
+      setTimeout(() => { hp.innerHTML = boopText; hp.style.opacity = 1; }, 140);
+      clearTimeout(boopT); boopT = setTimeout(() => { if (view === 'today' && boopHold <= Date.now()) { hp.style.opacity = 0; setTimeout(() => { hp.innerHTML = kitLine().text; hp.style.opacity = 1; }, 140); } }, 4600);
+      if (navigator.vibrate) navigator.vibrate(12);
+    };
+    $('#recStop').onclick = () => act('stopTimer').then(() => toast(t('Časovač zastavený')));
+    renderRec();
+    bindOpen($('#v-today'));
+  }
+  function renderRec() {
+    const r = $('#rec'); if (!r) return;
+    const live = D.live || { mode: 'off' };
+    const on = live.mode === 'auto' || live.mode === 'manual';
+    const away = live.mode === 'away';
+    const p = live.projectId && P(live.projectId);
+    r.classList.toggle('on', on); r.classList.toggle('away', away || live.mode === 'idle');
+    $('#recWhat').textContent = on ? (p ? p.title : t('Bez projektu')) : away ? (p ? p.title : t('Pauza')) : live.mode === 'idle' ? t('Pauza, si preč od PC') : CLOUD ? t('Teraz sa nič nemeria') : t('Na PC sa nič nemeria');
+    $('#recSub').textContent = on ? (live.mode === 'manual' ? t('Časovač') : live.app || '') : away ? t('Pauza, mimo {app}', { app: live.app || t('editora') }) : t('Spustí sa samo, keď na PC otvoríš editor');
+    $('#recStop').hidden = live.mode !== 'manual';
+    clearInterval(tcT);
+    const draw = () => {
+      const tc = $('#tc'); if (!tc) return;
+      let ms = 0;
+      if (on && live.since) ms = now() - Date.parse(live.since);
+      else if (away && live.since && live.awaySince) ms = Date.parse(live.awaySince) - Date.parse(live.since);
+      tc.textContent = L.timecode(Math.max(0, ms)).slice(0, 8);
+    };
+    draw(); if (on) tcT = setInterval(draw, 1000);
+  }
+
+  /* ---------- Zákazky ---------- */
+  function renderJobs() {
+    const list = D.projects.filter(p => !L.isArchived(p, D.settings));
+    $('#v-jobs').innerHTML = list.length ? L.STATUSES.map(s => {
+      const items = list.filter(p => p.status === s.id).sort((a, b) => (a.deadline || '9').localeCompare(b.deadline || '9'));
+      return items.length ? `<h2 class="sh" style="--c:${sColor(s.id)}"><i class="sdot"></i>${esc(s.label)}<span>${items.length}</span></h2>${items.map(card).join('')}` : '';
+    }).join('') : `<div class="empty">${t('Žiadne zákazky.')}</div>`;
+    bindOpen($('#v-jobs'));
+  }
+  function bindOpen(root) { root.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openDetail(b.dataset.open)); }
+
+  function notesHtml(p) {
+    if (p.notesHtml && window.RTE) {
+      if (CLOUD) return RTE.sanitize(p.notesHtml.replace(/src="sb:\/\//g, 'src="file:///__sb__/')).replace(/src="file:\/\/\/__sb__\/([^"]+)"/g, (m, k) => 'data-sb="' + k + '"');
+      return RTE.sanitize(p.notesHtml).replace(/src="(file:[^"]+)"/g, (m, u) => 'src="/api/img?u=' + encodeURIComponent(u.replace(/&amp;/g, '&')) + '" loading="lazy"');
+    }
+    return p.notes ? esc(p.notes).replace(/\n/g, '<br>') : `<span style="color:var(--muted)">${t('Bez zadania.')}</span>`;
+  }
+  function openDetail(id) {
+    const p = P(id); if (!p) return closeDetail();
+    const fresh = openId !== id;
+    openId = id;
+    const d = L.deadlineInfo(p), owed = L.owedOf(p), ms = L.projectMs(D, p.id);
+    const timing = D.live && D.live.mode === 'manual' && D.live.projectId === id;
+    let sh = $('.sheet');
+    if (!sh) { sh = document.createElement('div'); sh.className = 'sheet'; document.body.appendChild(sh); history.pushState({ sheet: 1 }, ''); }
+    const keepScroll = fresh ? 0 : sh.scrollTop;
+    sh.style.setProperty('--c', sColor(p.status));
+    sh.innerHTML = `<div class="top"><button class="btn small" data-back>← ${t('Späť')}</button></div>
+      <span class="chip type" style="--c:${sColor(p.status)}">${esc(t(p.type || 'Video'))}</span>
+      <h1>${esc(p.title)}</h1><div style="color:var(--muted)">${esc(p.client || '')}${p.contact ? ', ' + esc(t(p.contact)) : ''}</div>
+      <div class="chips">${isLive(p) ? '<span class="chip live">● REC</span>' : ''}${p.deadline && p.status !== 'done' ? `<span class="chip ${d.level}">${esc(d.label)}</span>` : ''}${p.reward ? `<span class="chip${owed ? ' owed' : ''}">${L.formatMoney(p.reward)}${owed ? t(', zostáva {m}', { m: L.formatMoney(owed) }) : t(' zaplatené')}</span>` : ''}${ms > 60000 ? `<span class="chip">${t('{d} práce', { d: L.formatDuration(ms, true) })}</span>` : ''}${p.revisions ? `<span class="chip">${t('{n}× úpravy', { n: p.revisions })}</span>` : ''}</div>
+      <div class="st glass">${L.STATUSES.map(s => `<button data-st="${s.id}" style="--c:${sColor(s.id)}" class="${p.status === s.id ? 'on' : ''}">${esc(s.label)}</button>`).join('')}</div>
+      <div class="row">
+        ${owed > 0 ? `<button class="btn" data-pay>${t('Zaplatil {m}', { m: L.formatMoney(owed) })}</button>` : ''}
+        ${p.status !== 'done' ? `<button class="btn${timing ? ' rec-on' : ''}" data-timer>${timing ? '■ ' + t('Zastaviť časovač') : CLOUD ? '▶ ' + t('Spustiť časovač') : '▶ ' + t('Časovač na PC')}</button>` : ''}
+        ${D.settings.ollamaEnabled ? `<button class="btn" data-ask>${t('Opýtať sa {name}', { name: esc(L.decl(kitName(), 'gen')) })}</button>` : ''}
+      </div>
+      <div class="note"><input placeholder="${t('Rýchla poznámka (feedback, nápad…)')}" data-note enterkeyhint="done"><button class="btn primary small" data-addnote>${t('Uložiť')}</button></div>
+      ${(p.checklist || []).length ? `<h2>${t('Postup')} <span>${p.checklist.filter(c => c.done).length}/${p.checklist.length}</span></h2>${p.checklist.map(c => `<button class="check glass${c.done ? ' done' : ''}" data-ck="${esc(c.id)}"><i></i><span>${esc(c.text)}</span></button>`).join('')}` : ''}
+      <h2>${t('Zadanie a poznámky')}</h2><div class="notes glass">${notesHtml(p)}</div>
+      ${(p.renders || []).length ? `<h2>${t('Rendery')} <span>${p.renders.length}</span></h2>${p.renders.slice().reverse().slice(0, 6).map(r => `<div class="check glass"><span>${esc(r.name)}${r.size ? ', ' + (r.size / 1048576).toFixed(1) + ' MB' : ''}</span></div>`).join('')}` : ''}`;
+    if (CLOUD) Cloud.hydrate(sh);
+    sh.scrollTop = keepScroll;
+    sh.querySelector('[data-back]').onclick = () => history.back();
+    sh.querySelectorAll('[data-st]').forEach(b => b.onclick = () => {
+      if (b.classList.contains('on')) return;
+      act('setStatus', { id, status: b.dataset.st }).then(() => toast(b.dataset.st === 'done' ? t('Hotovo!') : t('Presunuté: {s}', { s: b.textContent })));
+    });
+    const pay = sh.querySelector('[data-pay]'); if (pay) pay.onclick = () => act('addPayment', { id }).then(() => toast(t('Platba zapísaná')));
+    const tm = sh.querySelector('[data-timer]'); if (tm) tm.onclick = () => act(timing ? 'stopTimer' : 'startTimer', { id }).then(() => toast(timing ? t('Časovač zastavený') : CLOUD ? t('Časovač beží') : t('Časovač beží na PC')));
+    const ask = sh.querySelector('[data-ask]'); if (ask) ask.onclick = () => { kitProject = id; closeDetail(true); show('kit'); };
+    const inp = sh.querySelector('[data-note]');
+    const save = () => { const v = inp.value.trim(); if (v) act('appendNote', { id, text: v }).then(() => { inp.value = ''; inp.blur(); toast(t('Poznámka uložená')); }); };
+    sh.querySelector('[data-addnote]').onclick = save; inp.onkeydown = e => { if (e.key === 'Enter') save(); };
+    sh.querySelectorAll('[data-ck]').forEach(c => c.onclick = () => { c.classList.toggle('done'); act('toggleCheck', { id, itemId: c.dataset.ck }); });
+  }
+  function closeDetail(viaCode) {
+    const sh = $('.sheet');
+    openId = null;
+    if (!sh) return;
+    if (viaCode && history.state && history.state.sheet) { history.back(); return; }
+    sh.classList.add('out'); setTimeout(() => sh.remove(), 200);
+  }
+  addEventListener('popstate', () => { const sh = $('.sheet'); openId = null; if (sh) { sh.classList.add('out'); setTimeout(() => sh.remove(), 200); } });
+
+  /* ---------- Kit chat ---------- */
+  let msgs = [], busy = false, kitProject = '', ctrl = null;
+  try { msgs = JSON.parse(localStorage.getItem('woi-kit') || '[]'); } catch (e) { msgs = []; }
+  function md(text) {
+    const lines = esc(text).split('\n'); let html = '', list = false, code = null;
+    for (let l of lines) {
+      if (/^\s*```/.test(l)) { if (code === null) { if (list) { html += '</ul>'; list = false; } code = []; } else { html += '<pre>' + code.join('\n') + '</pre>'; code = null; } continue; }
+      if (code !== null) { code.push(l); continue; }
+      l = l.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+      const li = l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+      if (li) { if (!list) { html += '<ul>'; list = true; } html += '<li>' + li[1] + '</li>'; continue; }
+      if (list) { html += '</ul>'; list = false; }
+      if (l.trim()) html += '<p>' + l.replace(/^#+\s*/, '') + '</p>';
+    }
+    if (list) html += '</ul>';
+    if (code !== null) html += '<pre>' + code.join('\n') + '</pre>';
+    return html;
+  }
+  function suggestions() {
+    const pj = kitProject && P(kitProject);
+    if (pj) return [t('Čo mi tu ešte chýba?'), t('Daj mi 3 nápady na intro'), t('Ako odpísať na feedback?'), t('Koľko by som si mal pýtať?')];
+    return [t('Čo mám dnes urobiť ako prvé?'), t('Kto mi ešte dlhuje?'), t('Ako som na tom tento týždeň?'), t('Daj mi nápad na thumbnail')];
+  }
+  function renderKit() {
+    const c = $('#chat');
+    const pj = kitProject && P(kitProject);
+    $('#composer').hidden = view !== 'kit' || !D.settings.ollamaEnabled;
+    if (CLOUD) {
+      c.innerHTML = `<div class="kit-hello"><div class="kitbox" id="kitHello"></div><b>${t('{name} býva na tvojom PC', { name: esc(kitName()) })}</b><p>${t('Odpovedá z lokálneho AI, takže chat ide len cez wifi. V appke na PC otvor Nastavenia, Mobil cez wifi, a naskenuj QR kód.')}</p></div>`;
+      kit($('#kitHello'), 'sleepy'); return;
+    }
+    if (!D.settings.ollamaEnabled) {
+      c.innerHTML = `<div class="kit-hello"><div class="kitbox" id="kitHello"></div><b>${t('{name} teraz spí', { name: esc(kitName()) })}</b><p>${t('Lokálne AI je na PC vypnuté. Zapneš ho vo WorkingOnIt → Nastavenia → Lokálne AI.')}</p></div>`;
+      kit($('#kitHello'), 'sleepy'); return;
+    }
+    const ctx = pj ? `<div class="ctx glass">${t('O zákazke <b>{title}</b>', { title: esc(pj.title) })}<button data-noctx aria-label="${t('Zrušiť')}">✕</button></div>` : '';
+    if (!msgs.length) {
+      c.innerHTML = `<div class="kit-hello"><div class="kitbox" id="kitHello"></div><b>${t('Čo potrebuješ?')}</b><p>${t('Vidím tvoje zákazky, čas aj peniaze. Odpovedám z tvojho PC, takže musí byť zapnuté.')}</p></div>${ctx}
+        <div class="sugg">${suggestions().map(q => `<button data-s="${esc(q)}">${esc(q)}</button>`).join('')}</div>`;
+      kit($('#kitHello'), 'happy');
+    } else {
+      c.innerHTML = ctx + msgs.map((m, i) => `<div class="msg ${m.role}${m.role === 'assistant' ? ' glass' : ''}">${m.role === 'assistant' ? md(m.content) + (busy && i === msgs.length - 1 ? '<i class="caret"></i>' : '') : esc(m.content)}</div>`).join('') +
+        (!busy ? `<div style="text-align:center;margin-top:4px"><button class="btn small" data-clear>${t('Nový rozhovor')}</button></div>` : '');
+    }
+    c.querySelectorAll('[data-s]').forEach(b => b.onclick = () => sendKit(b.dataset.s));
+    const cl = c.querySelector('[data-clear]'); if (cl) cl.onclick = () => { msgs = []; saveMsgs(); renderKit(); };
+    const nc = c.querySelector('[data-noctx]'); if (nc) nc.onclick = () => { kitProject = ''; renderKit(); };
+    $('#kitSend').textContent = busy ? t('Stop') : t('Poslať');
+    requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
+  }
+  function saveMsgs() { try { localStorage.setItem('woi-kit', JSON.stringify(msgs.slice(-30))); } catch (e) { } }
+  async function sendKit(text) {
+    text = String(text || '').trim(); if (!text || busy) return;
+    msgs.push({ role: 'user', content: text }); msgs.push({ role: 'assistant', content: '' });
+    busy = true; renderKit();
+    ctrl = new AbortController();
+    try {
+      const r = await fetch('/api/kit', { method: 'POST', signal: ctrl.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: msgs.slice(0, -1).slice(-16), projectId: kitProject || null }) });
+      if (!r.ok || !r.body) throw new Error('http ' + r.status);
+      const reader = r.body.getReader(), dec = new TextDecoder();
+      for (;;) {
+        const { value, done } = await reader.read(); if (done) break;
+        msgs[msgs.length - 1].content += dec.decode(value, { stream: true });
+        const all = $('#chat').querySelectorAll('.msg'), last = all[all.length - 1];
+        if (last) { last.innerHTML = md(msgs[msgs.length - 1].content) + '<i class="caret"></i>'; window.scrollTo(0, document.body.scrollHeight); }
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') msgs[msgs.length - 1].content += (msgs[msgs.length - 1].content ? '\n\n' : '') + '⚠ ' + t('Nedostal som sa k PC. Je zapnuté a beží WorkingOnIt?');
+    }
+    if (!msgs[msgs.length - 1].content.trim()) msgs.pop();
+    busy = false; ctrl = null; saveMsgs(); renderKit();
+  }
+  const kin = $('#kitIn');
+  kin.addEventListener('input', () => { kin.style.height = 'auto'; kin.style.height = Math.min(120, kin.scrollHeight) + 'px'; });
+  kin.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('#kitSend').click(); } });
+  $('#kitSend').onclick = () => {
+    if (busy) { if (ctrl) ctrl.abort(); return; }
+    const txt = kin.value; kin.value = ''; kin.style.height = 'auto'; sendKit(txt);
+  };
+
+  /* ---------- Nová ---------- */
+  const paste = $('#paste');
+  paste.addEventListener('input', () => {
+    const f = L.parseMessage(paste.value).fields;
+    const rows = [[t('Názov'), f.title], [t('Klient'), f.client], [t('Typ'), f.type && t(f.type)], [t('Deadline'), f.deadline && L.formatDate(f.deadline)], [t('Odmena'), f.reward ? L.formatMoney(f.reward) : f.rewardNote]].filter(x => x[1]);
+    $('#preview').hidden = !rows.length || !paste.value.trim();
+    $('#preview').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+  });
+  /* nápad z mobilu (text + voliteľná fotka, zmenšená na max 1600 px) */
+  let photo = null;
+  $$('[data-nk]').forEach(b => b.onclick = () => {
+    $$('[data-nk]').forEach(x => x.classList.toggle('on', x === b));
+    $('#newJob').hidden = b.dataset.nk !== 'job'; $('#newIdea').hidden = b.dataset.nk !== 'idea';
+    if (b.dataset.nk === 'idea') renderIdeas();
+  });
+  $('#photoIn').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    const url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+    const img = await new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = url; }).catch(() => null);
+    if (!img) return toast(t('Fotku sa nepodarilo načítať'));
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const out = c.toDataURL('image/jpeg', .84);
+    photo = { data: out.split(',')[1], ext: 'jpg' };
+    $('#photoImg').src = out; $('#photoBox').hidden = false;
+  };
+  $('#photoX').onclick = () => { photo = null; $('#photoBox').hidden = true; };
+  $('#saveIdea').onclick = async () => {
+    const text = $('#ideaText').value.trim();
+    if (!text && !photo) return toast(t('Napíš nápad alebo pridaj fotku'));
+    const b = $('#saveIdea'); b.disabled = true; b.textContent = t('Ukladám…');
+    try { await act('captureIdea', { text, image: photo }); $('#ideaText').value = ''; photo = null; $('#photoBox').hidden = true; toast(t('Nápad uložený')); }
+    catch (e) { } finally { b.disabled = false; b.textContent = t('Uložiť nápad'); }
+  };
+  function renderIdeas() {
+    const list = (D && D.ideas) || [];
+    const cover = u => !u ? '' : /^sb:\/\//.test(u) ? `<img data-sb="${esc(u.slice(5))}" alt="">` : `<img src="/api/img?u=${encodeURIComponent(u)}" alt="" loading="lazy">`;
+    $('#ideasList').innerHTML = list.length ? `<h2>${t('Posledné nápady')}</h2>` + list.slice(0, 12).map(i => `<div class="idea-m glass">${cover(i.cover)}<div><b>${esc(i.title || t('Bez názvu'))}</b>${i.text ? `<p>${esc(i.text)}</p>` : ''}${i.frames ? `<p>Storyboard, ${i.frames} ${L.plural(i.frames, 'záber', 'zábery', 'záberov')}</p>` : ''}</div></div>`).join('') : '';
+    if (CLOUD) Cloud.hydrate($('#ideasList'));
+  }
+
+  $('#create').onclick = async () => {
+    if (!paste.value.trim()) return toast(t('Najprv vlož správu od klienta'));
+    await act('createFromText', { text: paste.value });
+    paste.value = ''; $('#preview').hidden = true; toast(t('Zákazka pridaná')); show('jobs');
+  };
+
+  /* ---------- navigácia a dáta ---------- */
+  function show(v, force) {
+    if (view === v && v !== 'kit' && !force) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    view = v;
+    $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    $$('.view').forEach(s => s.hidden = s.id !== 'v-' + v);
+    $('nav').hidden = false;
+    render(true);
+    if (v !== 'kit') window.scrollTo(0, 0);
+  }
+  $$('nav button').forEach(b => b.onclick = () => show(b.dataset.v));
+  function render(full) {
+    if (!D) return;
+    $('#navKit').textContent = kitName();
+    $('#kitIn').placeholder = t('Napíš {name}…', { name: L.decl(kitName(), 'dat') });
+    $('#composer').hidden = view !== 'kit' || !D.settings.ollamaEnabled;
+    const typing = document.activeElement && document.activeElement.matches('input, textarea');
+    if (view === 'today') renderToday();
+    if (view === 'jobs') renderJobs();
+    if (view === 'kit' && !busy && (full || !typing)) renderKit();
+    if (view === 'new' && !$('#newIdea').hidden) renderIdeas();
+    if (openId && !(typing && document.activeElement.closest('.sheet'))) openDetail(openId);
+  }
+  function onData(d) { const relang = useLang(d); D = d; skew = D.serverTime - Date.now(); $('#conn').classList.add('ok'); if (!$('#v-login').hidden || relang) show(view, true); else render(); }
+
+  /* ---------- online režim: prihlásenie do vlastnej databázy ---------- */
+  let lastErr = '';
+  function showLogin(msg) {
+    $$('.view').forEach(s => s.hidden = s.id !== 'v-login');
+    $('nav').hidden = true; $('#composer').hidden = true;
+    const sv = Cloud.saved();
+    const code = decodeURIComponent((location.hash.match(/c=([^&]+)/) || [])[1] || '');
+    if (code && !$('#lgCode').value) $('#lgCode').value = code;
+    if (sv.email && !$('#lgEmail').value) $('#lgEmail').value = sv.email;
+    $('#lgErr').textContent = msg || '';
+    kit($('#loginKit'), msg ? 'worried' : 'happy');
+  }
+  function startCloud() {
+    Cloud.onData = onData;
+    Cloud.onStatus = st => {
+      $('#conn').classList.toggle('ok', !!st.ok);
+      $('#conn').title = st.ok ? t('Spojené s databázou') : (st.error || t('Bez spojenia'));
+      if (!st.ok && st.error && st.error !== lastErr && st.code !== 'offline') toast(st.error);
+      lastErr = st.ok ? '' : st.error;
+    };
+    const sv = Cloud.saved();
+    if (sv.conf && sv.session) {
+      Cloud.client(sv.conf, sv.session);
+      Cloud.start().catch(e => showLogin(e.code === 'signedout' ? t('Prihlásenie vypršalo, prihlás sa znova.') : e.message));
+    } else showLogin();
+    $('#lgGo').onclick = async () => {
+      const b = $('#lgGo'); b.disabled = true; b.textContent = t('Prihlasujem…'); $('#lgErr').textContent = '';
+      try { await Cloud.login($('#lgCode').value, $('#lgEmail').value, $('#lgPass').value); $('#lgPass').value = ''; }
+      catch (e) { $('#lgErr').textContent = e.message; kit($('#loginKit'), 'worried'); }
+      finally { b.disabled = false; b.textContent = t('Prihlásiť sa'); }
+    };
+    $('#lgPass').onkeydown = e => { if (e.key === 'Enter') $('#lgGo').click(); };
+  }
+
+  /* ---------- režim z PC: živé dáta cez wifi ---------- */
+  let es = null, retry = 1000;
+  function connect() {
+    if (es) es.close();
+    es = new EventSource('/api/events');
+    es.onmessage = e => { retry = 1000; onData(JSON.parse(e.data)); };
+    es.onerror = () => { $('#conn').classList.remove('ok'); if (es.readyState === 2) { setTimeout(connect, retry); retry = Math.min(15000, retry * 2); } };
+  }
+  if (CLOUD) startCloud();
+  else {
+    connect();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && (!es || es.readyState === 2)) connect(); });
+  }
+  setInterval(() => { if (D && view === 'today' && !openId) renderToday(); }, 60000);
+})();
+</script>
+</body>
+</html>

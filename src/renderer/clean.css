@@ -1,0 +1,368 @@
+/* =====================================================================
+   ČISTÁ – vzhľad podľa Apple: systémové farby, svetlý aj tmavý režim,
+   materiály s rozmazaním, presné medzery a pohyb, ktorý nadväzuje.
+   Stavia na rozložení Lampy (Kit hore v paneli), mení vizuál.
+   ===================================================================== */
+@font-face { font-family: 'Inter Variable'; font-style: normal; font-display: swap; font-weight: 100 900;
+  src: url(../../node_modules/@fontsource-variable/inter/files/inter-latin-ext-opsz-normal.woff2) format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Inter Variable'; font-style: normal; font-display: swap; font-weight: 100 900;
+  src: url(../../node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* ---------- farby: tmavý režim ---------- */
+:root[data-theme="clean"] {
+  --display: 'Inter Variable', 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Inter Variable', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --tc: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+  --win: #252527; --ink: #1c1c1e; --panel: #2c2c2e; --raise: #353538; --raise2: #3f3f42;
+  --line: rgba(255, 255, 255, .14); --line-soft: rgba(255, 255, 255, .08);
+  --text: #f5f5f7; --muted: #a1a1a6; --faint: #6e6e73;
+  --fill: rgba(118, 118, 128, .24); --fill2: rgba(118, 118, 128, .16); --well: rgba(118, 118, 128, .14);
+  --hover: rgba(255, 255, 255, .06); --sel: rgba(255, 255, 255, .1);
+  --rec: #ff453a; --amber: #ffb340; --lilac: #bf5af2; --mint: #30d158; --pink: #ff375f; --blue: #0a84ff;
+  --s-todo: #98989d; --s-working: #ffd60a; --s-review: #0a84ff; --s-revisions: #bf5af2; --s-done: #30d158;
+  --shadow: rgba(0, 0, 0, .5); --scrim: rgba(0, 0, 0, .38); --overdue-ink: #ff6961;
+  --glass: var(--panel); --glass-hi: transparent; --glass-line: var(--line-soft); --glow: 0; --aurora-op: 0;
+  --material: rgba(44, 44, 46, .74); --material-line: rgba(255, 255, 255, .12);
+  --card-shadow: 0 0 0 .5px rgba(255, 255, 255, .07), 0 1px 2px rgba(0, 0, 0, .35);
+  --card-shadow-hover: 0 0 0 .5px rgba(255, 255, 255, .1), 0 6px 18px rgba(0, 0, 0, .45);
+  --pop-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 18px 48px rgba(0, 0, 0, .55);
+  --thumb: #636366;
+  --r-sm: 6px; --r: 10px; --r-lg: 14px;
+  --ease: cubic-bezier(.25, .1, .25, 1);
+  --spring: cubic-bezier(.32, 1.25, .5, 1);
+  --glide: cubic-bezier(.2, .9, .25, 1);
+  --clip: var(--accent);
+}
+/* ---------- farby: svetlý režim ---------- */
+:root[data-theme="clean"][data-scheme="light"] {
+  color-scheme: light;
+  --win: #ebebed; --ink: #f5f5f7; --panel: #ffffff; --raise: #f2f2f4; --raise2: #e8e8eb;
+  --line: rgba(0, 0, 0, .14); --line-soft: rgba(0, 0, 0, .075);
+  --text: #1d1d1f; --muted: #6e6e73; --faint: #a1a1a6;
+  --fill: rgba(118, 118, 128, .12); --fill2: rgba(118, 118, 128, .08); --well: rgba(118, 118, 128, .08);
+  --hover: rgba(0, 0, 0, .04); --sel: rgba(0, 0, 0, .075);
+  --rec: #ff3b30; --amber: #c76a00; --lilac: #af52de; --mint: #248a3d; --pink: #ff2d55; --blue: #007aff;
+  --s-todo: #8e8e93; --s-working: #ffcc00; --s-review: #007aff; --s-revisions: #af52de; --s-done: #34c759;
+  --shadow: rgba(0, 0, 0, .16); --scrim: rgba(0, 0, 0, .2); --overdue-ink: #d70015;
+  --material: rgba(250, 250, 252, .8); --material-line: rgba(0, 0, 0, .1);
+  --card-shadow: 0 0 0 .5px rgba(0, 0, 0, .07), 0 1px 3px rgba(0, 0, 0, .07);
+  --card-shadow-hover: 0 0 0 .5px rgba(0, 0, 0, .08), 0 8px 22px rgba(0, 0, 0, .1);
+  --pop-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 18px 48px rgba(0, 0, 0, .18);
+  --thumb: #c7c7cc;
+}
+
+/* ---------- základ ---------- */
+:root[data-theme="clean"] body { background: var(--win); font: 400 13.5px/1.45 var(--body); letter-spacing: -.003em; font-feature-settings: 'cv11', 'ss01'; }
+:root[data-theme="clean"] body::before, :root[data-theme="clean"] body::after { display: none; }
+:root[data-theme="clean"] :is(h1, h2, h3, h4, h5) { font-family: var(--display); letter-spacing: -.015em; }
+:root[data-theme="clean"] ::-webkit-scrollbar-thumb { background: var(--thumb); border: 4px solid transparent; background-clip: padding-box; }
+:root[data-theme="clean"] :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
+:root[data-theme="clean"] ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* ---------- titulková lišta: klasické tlačidlá Windowsu vpravo, hľadanie v strede ---------- */
+:root[data-theme="clean"] .win-ctl button:hover { background: var(--fill); color: var(--text); }
+:root[data-theme="clean"] .win-ctl button.x:hover { background: #e81123; color: #fff; }
+:root[data-theme="clean"] .titlebar .spot-trigger { width: 320px; height: 26px; background: var(--fill2); border: 0; border-radius: 7px; color: var(--muted); font-size: 12.5px; backdrop-filter: none; transition: background .15s, width .35s var(--glide); }
+:root[data-theme="clean"] .titlebar .spot-trigger:hover { background: var(--fill); color: var(--text); }
+:root[data-theme="clean"] .titlebar .spot-trigger kbd { background: none; border: 0; color: var(--faint); font: 500 11px var(--body); }
+
+/* ---------- bočný panel ---------- */
+:root[data-theme="clean"] .side { background: transparent; border-right: 0; padding: 4px 12px 12px; }
+:root[data-theme="clean"] .brand { display: none; }
+:root[data-theme="clean"] .nav { gap: 1px; }
+:root[data-theme="clean"] .nav button { padding: 6px 9px; border-radius: 7px; font-size: 13.5px; font-weight: 500; color: var(--text); gap: 9px; }
+:root[data-theme="clean"] .nav button svg { width: 17px; height: 17px; color: var(--accent); }
+:root[data-theme="clean"] .nav button:hover { background: var(--hover); }
+:root[data-theme="clean"] .nav button.active, :root[data-theme="clean"] .nav button.active:hover { background: transparent; color: var(--text); font-weight: 600; }
+:root[data-theme="clean"] .nav button.active > span:not(.nav-badge)::after { display: none; }
+:root[data-theme="clean"] .nav-ind { display: block; background: var(--sel); box-shadow: none; border-radius: 7px; transition: transform .45s var(--spring), height .3s var(--glide), opacity .2s; }
+:root[data-theme="clean"] .nav-ind::before { display: none; }
+:root[data-theme="clean"] .nav-badge { background: var(--fill); color: var(--muted); font-weight: 600; }
+
+/* ---------- hlavná plocha ako okno s obsahom ---------- */
+:root[data-theme="clean"] .main { background: var(--ink); border-top-left-radius: 12px; box-shadow: -.5px -.5px 0 var(--line-soft); }
+:root[data-theme="clean"] .top { padding: 22px 30px 16px; gap: 14px; }
+:root[data-theme="clean"] .top-title h1 { font: 700 28px/1.1 var(--display); letter-spacing: -.025em !important; font-stretch: normal; }
+:root[data-theme="clean"] .top-title p { font-size: 13px; margin-top: 4px; color: var(--muted); }
+:root[data-theme="clean"] .view { padding: 2px 30px 30px; }
+
+/* ---------- tlačidlá ---------- */
+:root[data-theme="clean"] .btn { border: 0; border-radius: 8px; background: var(--fill2); color: var(--text); font-weight: 560; font-size: 13px; padding: 7px 13px; box-shadow: none; }
+:root[data-theme="clean"] .btn:hover { background: var(--fill); }
+:root[data-theme="clean"] .btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 1px 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+:root[data-theme="clean"] .btn.primary:hover { background: var(--accent); filter: brightness(1.06); }
+:root[data-theme="clean"] .btn.ghost { background: transparent; color: var(--accent); }
+:root[data-theme="clean"] .btn.ghost:hover { background: var(--hover); }
+:root[data-theme="clean"] .btn.danger { background: color-mix(in srgb, var(--rec) 12%, transparent); color: var(--rec); }
+:root[data-theme="clean"] .btn.small { padding: 4px 10px; font-size: 12.5px; border-radius: 6px; }
+:root[data-theme="clean"] .btn:active:not(:disabled) { transform: scale(.97); filter: brightness(.96); }
+:root[data-theme="clean"] .rec-btn { border-radius: 8px; background: var(--fill); }
+
+/* ---------- polia ---------- */
+:root[data-theme="clean"] :is(.input, .field input, .field select, .field textarea, .arch-tools select, .sel-inline, .code-row input) {
+  background: var(--panel); border: 0; border-radius: 7px; box-shadow: 0 0 0 .5px var(--line), 0 .5px 1px rgba(0, 0, 0, .06);
+  padding: 7px 10px; transition: box-shadow .18s var(--ease);
+}
+:root[data-theme="clean"][data-scheme="dark"] :is(.input, .field input, .field select, .field textarea, .arch-tools select, .sel-inline, .code-row input) { background: rgba(255, 255, 255, .055); }
+:root[data-theme="clean"] :is(.input, .field input, .field select, .field textarea, .sel-inline):focus { box-shadow: 0 0 0 .5px var(--accent), 0 0 0 3.5px color-mix(in srgb, var(--accent) 35%, transparent); background: var(--panel); }
+:root[data-theme="clean"][data-scheme="dark"] :is(.input, .field input, .field textarea):focus { background: rgba(255, 255, 255, .08); }
+:root[data-theme="clean"] .field label, :root[data-theme="clean"] .lbl { font-size: 12px; font-weight: 560; color: var(--muted); }
+:root[data-theme="clean"] .field input[type=date]::-webkit-calendar-picker-indicator { filter: none; opacity: .55; }
+:root[data-theme="clean"][data-scheme="dark"] .field input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1); }
+:root[data-theme="clean"] .search { background: var(--fill2); border: 0; border-radius: 8px; height: 30px; transition: background .15s, box-shadow .18s; }
+:root[data-theme="clean"] .search:focus-within { background: var(--panel); box-shadow: 0 0 0 .5px var(--accent), 0 0 0 3.5px color-mix(in srgb, var(--accent) 30%, transparent); }
+:root[data-theme="clean"] .search input { padding: 5px 0; }
+:root[data-theme="clean"] .suffix span { color: var(--faint); }
+:root[data-theme="clean"] .hint { color: var(--muted); font-size: 12px; }
+
+/* prepínač ako na iPhone */
+:root[data-theme="clean"] .toggle input { width: 38px; height: 22px; background: var(--fill); box-shadow: none; transition: background .25s var(--ease); }
+:root[data-theme="clean"] .toggle input::after { top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25), 0 0 0 .5px rgba(0, 0, 0, .04); transition: transform .32s var(--spring), width .2s var(--ease); }
+:root[data-theme="clean"] .toggle input:active::after { width: 22px; }
+:root[data-theme="clean"] .toggle input:checked { background: var(--mint); box-shadow: none; }
+:root[data-theme="clean"][data-scheme="light"] .toggle input:checked { background: #34c759; }
+:root[data-theme="clean"] .toggle input:checked::after { transform: translateX(16px); background: #fff; }
+:root[data-theme="clean"] .toggle input:checked:active::after { transform: translateX(12px); }
+
+/* segmentový ovládač s posuvným jazdcom (jazdec pridá polish.js) */
+:root[data-theme="clean"] :is(.seg, .status-pick, .pg-main .status-pick, .mseg) { position: relative; background: var(--fill2); border: 0; border-radius: 9px; padding: 2px; gap: 0; isolation: isolate; }
+:root[data-theme="clean"] :is(.seg, .status-pick) button { position: relative; z-index: 1; border-radius: 7px; background: transparent !important; box-shadow: none !important; color: var(--text); font-weight: 520; font-size: 12.5px; padding: 4px 12px; transition: color .2s; }
+:root[data-theme="clean"] :is(.seg, .status-pick) button.on { color: var(--text); font-weight: 620; }
+:root[data-theme="clean"] .status-pick button.on, :root[data-theme="clean"] .pg-main .status-pick button.on { color: var(--text); }
+:root[data-theme="clean"] .seg-thumb { position: absolute; z-index: 0; top: 2px; bottom: 2px; left: 0; border-radius: 7px; background: var(--panel); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .04), 0 2px 6px rgba(0, 0, 0, .12), 0 1px 1px rgba(0, 0, 0, .06); transition: transform .42s var(--spring), width .42s var(--spring), background .25s; pointer-events: none; }
+:root[data-theme="clean"][data-scheme="dark"] .seg-thumb { background: #636366; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+:root[data-theme="clean"] .status-pick .seg-thumb { background: color-mix(in srgb, var(--thumbc, var(--panel)) 92%, var(--panel)); }
+:root[data-theme="clean"] .status-pick button.on::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 1px; }
+
+/* ---------- panely ---------- */
+:root[data-theme="clean"] :is(.box, .stat, .tl, .tl3-chart, .tl3-agenda, .cl-card, .client-card, .set-sec, .snip, .exp, .tpl-folder) { background: var(--panel); border: 0; border-radius: 12px; box-shadow: var(--card-shadow); backdrop-filter: none; }
+:root[data-theme="clean"] .box h3 { font: 650 15px/1.2 var(--display); letter-spacing: -.01em; }
+:root[data-theme="clean"] .stats { background: var(--panel); border: 0; border-radius: 12px; box-shadow: var(--card-shadow); }
+:root[data-theme="clean"] .stats .stat { box-shadow: none; border-left: .5px solid var(--line-soft); }
+:root[data-theme="clean"] .stat .v { font-weight: 680; letter-spacing: -.02em; font-stretch: normal; }
+:root[data-theme="clean"] :is(.li, .check, .money-box div, .week .d, .preview-tree, .box-in) { background: var(--well); border: 0; border-radius: 9px; }
+:root[data-theme="clean"] .chip { background: var(--fill2); color: var(--muted); border-radius: 6px; font-weight: 520; }
+:root[data-theme="clean"] .chip.overdue { background: color-mix(in srgb, var(--rec) 14%, transparent); color: var(--rec); }
+:root[data-theme="clean"] .chip.today, :root[data-theme="clean"] .chip.soon { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
+:root[data-theme="clean"] .ava { box-shadow: none; color: #fff; background: hsl(var(--h) 55% 55%); }
+
+/* ---------- nástenka: Pripomienky, nie papier ---------- */
+:root[data-theme="clean"] .board { gap: 16px; }
+:root[data-theme="clean"] .col { background: transparent; border-radius: 14px; padding: 0; min-height: 240px; }
+:root[data-theme="clean"] .col.over { background: color-mix(in srgb, var(--c) 8%, transparent); outline: 0; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 45%, transparent); }
+:root[data-theme="clean"] .col-head { padding: 0 4px 10px; }
+:root[data-theme="clean"] .col-head .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+:root[data-theme="clean"] .col-head h3 { font: 650 14px var(--display); letter-spacing: -.01em; }
+:root[data-theme="clean"] .col-head .count { color: var(--faint); font-weight: 500; }
+:root[data-theme="clean"] .col-list { gap: 8px; }
+:root[data-theme="clean"] .col-empty { border: 0; background: var(--well); border-radius: 10px; color: var(--faint); font-size: 12px; }
+:root[data-theme="clean"] .add-in-col { color: var(--accent); font-weight: 520; padding: 6px 4px; }
+:root[data-theme="clean"] .add-in-col:hover { background: var(--hover); color: var(--accent); }
+:root[data-theme="clean"] .card {
+  background: var(--panel); color: var(--text); border: 0; border-radius: 12px; padding: 11px 12px 10px;
+  box-shadow: var(--card-shadow); transform: none; cursor: default;
+  transition: box-shadow .25s var(--ease), transform .3s var(--spring);
+}
+:root[data-theme="clean"] .col-list .card:nth-child(n) { transform: none; }
+:root[data-theme="clean"] .card:hover { background: var(--panel); box-shadow: var(--card-shadow-hover); transform: translateY(-1px); }
+:root[data-theme="clean"] .card:active { transform: scale(.985); }
+:root[data-theme="clean"] .card.focus { box-shadow: 0 0 0 2px var(--accent), var(--card-shadow); }
+:root[data-theme="clean"] .card.ghost { box-shadow: var(--pop-shadow); transform: scale(1.03) rotate(1.2deg); }
+:root[data-theme="clean"] .card :is(.tape, .stamp) { display: none; }
+:root[data-theme="clean"] .card-top { border-bottom: 0; padding: 0; margin: 0 0 2px; }
+:root[data-theme="clean"] .card h4 { font: 620 14px/1.3 var(--display); color: var(--text); letter-spacing: -.01em !important; font-stretch: normal; }
+:root[data-theme="clean"] .card .price { color: var(--muted); font-weight: 560; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+:root[data-theme="clean"] .card .ln { color: var(--muted); font-size: 12.5px; line-height: 19px; border-bottom: 0; }
+:root[data-theme="clean"] .card .ln.who { color: var(--muted); }
+:root[data-theme="clean"] .card :is(.ln.overdue) { color: var(--rec); font-weight: 600; }
+:root[data-theme="clean"] .card :is(.ln.today, .ln.soon, .ln.owed) { color: var(--amber); font-weight: 600; }
+:root[data-theme="clean"] .card .ln.paid { color: var(--mint); }
+:root[data-theme="clean"] .card .ln.live { color: var(--rec); }
+:root[data-theme="clean"] .card .ln.live::before { background: var(--rec); }
+:root[data-theme="clean"] .card .progress { background: var(--fill2); height: 3px; margin-top: 8px; border-radius: 3px; }
+:root[data-theme="clean"] .card .progress i { background: var(--c, var(--accent)); }
+:root[data-theme="clean"] .card .play { color: var(--faint); bottom: 7px; right: 7px; border-radius: 50%; }
+:root[data-theme="clean"] .card .play:hover { background: var(--fill2); color: var(--text); }
+:root[data-theme="clean"] .card .play.on { color: var(--rec); }
+:root[data-theme="clean"] .card .prio { top: -3px; right: -3px; bottom: auto; width: 10px; height: 10px; background: var(--rec); box-shadow: 0 0 0 2px var(--ink); }
+:root[data-theme="clean"] .card.is-done { opacity: .62; }
+:root[data-theme="clean"] .card.is-done h4 { text-decoration: line-through; text-decoration-color: var(--faint); }
+:root[data-theme="clean"] .card.over { padding-bottom: 10px; }
+:root[data-theme="clean"] .board-tools { margin-bottom: 16px; }
+
+/* nápady ako karty */
+:root[data-theme="clean"] .idea-card { background: var(--panel); color: var(--text); border: 0; border-radius: 12px; box-shadow: var(--card-shadow); transform: none; }
+:root[data-theme="clean"] .idea-card:nth-child(n) { transform: none; }
+:root[data-theme="clean"] .idea-card:hover { box-shadow: var(--card-shadow-hover); transform: translateY(-1px); }
+:root[data-theme="clean"] .idea-card :is(h3, h4, b) { color: var(--text); }
+:root[data-theme="clean"] .idea-card :is(p, small, .ic-meta) { color: var(--muted); }
+:root[data-theme="clean"] .idea-card .chip { background: var(--fill2); color: var(--muted); }
+
+/* ---------- stránka zákazky a nápadu ---------- */
+:root[data-theme="clean"] .drawer { background: var(--ink); border: 0; border-radius: 0; box-shadow: none; }
+:root[data-theme="clean"] .pg-top { background: color-mix(in srgb, var(--ink) 72%, transparent); backdrop-filter: saturate(1.8) blur(20px); border-bottom: .5px solid var(--line-soft); }
+:root[data-theme="clean"] .pg-type { border: 0; background: var(--fill2); color: var(--muted); border-radius: 6px; font-weight: 560; }
+:root[data-theme="clean"] :is(.pg-main .d-title, .d-title) { font: 700 32px/1.12 var(--display); letter-spacing: -.028em !important; font-stretch: normal; }
+:root[data-theme="clean"] .d-title:focus { color: var(--text); }
+:root[data-theme="clean"] .pg-sec .sec-h h5, :root[data-theme="clean"] .sec-h h5 { font: 650 15px var(--display); letter-spacing: -.01em; }
+:root[data-theme="clean"] .rte-wrap { background: var(--panel); border: 0; border-radius: 12px; box-shadow: var(--card-shadow); }
+:root[data-theme="clean"] .rte-bar { background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: saturate(1.8) blur(16px); border-bottom: .5px solid var(--line-soft); border-radius: 12px 12px 0 0; }
+:root[data-theme="clean"] .rte-bar button { border-radius: 6px; color: var(--muted); }
+:root[data-theme="clean"] .rte-bar button:hover { background: var(--fill2); color: var(--text); }
+:root[data-theme="clean"] .rte { --rte-bg: transparent; }
+
+/* ---------- materiály: menu, spotlight, modály, toasty ---------- */
+:root[data-theme="clean"] :is(.menu, .spot, .toast, .pop-menu) { background: var(--material) !important; backdrop-filter: saturate(1.8) blur(28px); -webkit-backdrop-filter: saturate(1.8) blur(28px); border: 0 !important; box-shadow: var(--pop-shadow); }
+:root[data-theme="clean"] .menu { border-radius: 10px; padding: 5px; }
+:root[data-theme="clean"] .menu button { border-radius: 5px; }
+:root[data-theme="clean"] .menu button:hover { background: var(--accent); color: var(--accent-ink); }
+:root[data-theme="clean"] .menu button:hover :is(small, .sub, span) { color: inherit; opacity: .85; }
+:root[data-theme="clean"] :is(.modal, .chat, .ob, .cw, .sk) { background: var(--panel) !important; border: 0 !important; border-radius: 14px; box-shadow: var(--pop-shadow); }
+:root[data-theme="clean"] .chat { border-radius: 16px; }
+:root[data-theme="clean"] :is(.modal-wrap, .cw-wrap, .spot-wrap) { background: var(--scrim); }
+:root[data-theme="clean"] .ob-wrap { background: var(--scrim); backdrop-filter: blur(18px); }
+:root[data-theme="clean"] .spot { border-radius: 14px; }
+:root[data-theme="clean"] .spot-q { font-size: 19px; font-weight: 450; letter-spacing: -.01em; }
+:root[data-theme="clean"] .spot-item.on { background: var(--accent); color: var(--accent-ink); border-radius: 8px; }
+:root[data-theme="clean"] .spot-item.on :is(small, .spot-hint) { color: inherit; opacity: .8; }
+:root[data-theme="clean"] .spot-item { border-radius: 8px; padding: 7px 9px; }
+:root[data-theme="clean"] .spot-ic { width: 28px; height: 28px; border-radius: 7px; background: color-mix(in srgb, var(--c) 16%, transparent); }
+:root[data-theme="clean"] .spot-item.on .spot-ic { background: rgba(255, 255, 255, .22); color: var(--accent-ink); }
+:root[data-theme="clean"] .spot-hint { background: var(--fill2); }
+:root[data-theme="clean"] .spot-item.on .spot-hint { background: rgba(255, 255, 255, .22); color: var(--accent-ink); opacity: 1; }
+:root[data-theme="clean"] .spot-q:focus, :root[data-theme="clean"] .spot-q:focus-visible { outline: 0; }
+:root[data-theme="clean"] .spot-in { border-bottom: .5px solid var(--line-soft); }
+:root[data-theme="clean"] .spot-in kbd, :root[data-theme="clean"] .spot-foot kbd { background: var(--fill2); border: 0; box-shadow: none; color: var(--muted); }
+:root[data-theme="clean"] .toast { border-radius: 14px; }
+:root[data-theme="clean"] .toast .ic { background: var(--fill2); color: var(--accent); border-radius: 50%; }
+:root[data-theme="clean"] .scrim { background: transparent; }
+
+/* ---------- nastavenia ---------- */
+:root[data-theme="clean"] .set-sec { padding: 18px 20px 16px; }
+:root[data-theme="clean"] .set-ic { background: var(--accent); color: var(--accent-ink); border-radius: 7px; box-shadow: none; }
+:root[data-theme="clean"] .set-nav button { border-radius: 7px; padding: 5px 9px; color: var(--text); font-weight: 500; }
+:root[data-theme="clean"] .set-nav button.on { background: var(--sel); box-shadow: none; font-weight: 600; }
+:root[data-theme="clean"] .set-nav.has-pill > button { position: relative; z-index: 1; }
+:root[data-theme="clean"] .set-nav.has-pill > button.on, :root[data-theme="clean"] .set-nav.has-pill > button.on:hover { background: transparent; }
+.v-pill { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 7px; background: var(--sel); pointer-events: none; transition: transform .42s var(--spring), height .3s var(--glide), opacity .2s; }
+:root[data-theme="clean"] .set-row { border-top: .5px solid var(--line-soft); }
+:root[data-theme="clean"] .theme-card { border-radius: 10px; }
+:root[data-theme="clean"] .seg.ob-lang { position: absolute; top: 18px; right: 20px; z-index: 2; }
+:root[data-theme="clean"] .ob { padding: 28px 32px 22px; }
+:root[data-theme="clean"] .ob h1 { font: 700 30px/1.12 var(--display); letter-spacing: -.025em; }
+:root[data-theme="clean"] .ob h2 { font: 700 22px var(--display); letter-spacing: -.02em; }
+:root[data-theme="clean"] .ob-preset, :root[data-theme="clean"] .ob-opt, :root[data-theme="clean"] .ob-ed { background: var(--well); border: 0; border-radius: 10px; box-shadow: none; }
+:root[data-theme="clean"] :is(.ob-preset, .ob-opt, .ob-ed).on { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); box-shadow: inset 0 0 0 1.5px var(--accent); }
+:root[data-theme="clean"] .ob-dots i.on { box-shadow: none; }
+
+/* ---------- vlastné vyskakovacie menu namiesto <select> (polish.js) ---------- */
+.pb { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; text-align: left; cursor: default;
+  background: var(--panel); color: var(--text); border: 0; border-radius: 7px; padding: 5px 7px 5px 10px; font: inherit; font-size: 13px;
+  box-shadow: 0 0 0 .5px var(--line), 0 .5px 1.5px rgba(0, 0, 0, .1); transition: box-shadow .18s var(--ease), background .15s; }
+.pb:hover { background: color-mix(in srgb, var(--panel) 92%, var(--text)); }
+.pb.open, .pb:focus-visible { outline: 0; box-shadow: 0 0 0 .5px var(--accent), 0 0 0 3.5px color-mix(in srgb, var(--accent) 35%, transparent); }
+.pb span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb svg { width: 15px; height: 15px; flex: none; padding: 2px 1px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); }
+.field .pb { width: 100%; padding: 7px 8px 7px 10px; }
+.pb[disabled] { opacity: .5; }
+:root[data-scheme="dark"] .pb { background: rgba(255, 255, 255, .08); }
+.pop-menu { position: fixed; z-index: 200; min-width: 160px; max-height: min(60vh, 420px); overflow: auto; padding: 5px; border-radius: 10px;
+  background: var(--material, var(--panel)); color: var(--text); box-shadow: var(--pop-shadow, 0 18px 48px rgba(0, 0, 0, .5)); border: 0;
+  transform-origin: var(--ox, 50%) var(--oy, 0); animation: popin .26s var(--spring, ease) both; }
+.pop-menu.out { animation: popout .14s ease-in both; }
+@keyframes popin { from { opacity: 0; transform: scale(.92); } }
+@keyframes popout { to { opacity: 0; transform: scale(.97); } }
+.pop-menu button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; color: inherit; text-align: left; font: inherit; font-size: 13px; padding: 5px 10px 5px 8px; border-radius: 6px; white-space: nowrap; }
+.pop-menu button i { width: 14px; flex: none; display: grid; place-items: center; }
+.pop-menu button i svg { width: 12px; height: 12px; }
+.pop-menu button.hl { background: var(--accent); color: var(--accent-ink); }
+.pop-menu button[disabled] { opacity: .45; }
+.pop-menu hr { border: 0; height: .5px; background: var(--line); margin: 4px 8px; }
+
+/* ---------- pohyb: morphing cez View Transitions ---------- */
+::view-transition-group(*) { animation-duration: .42s; animation-timing-function: cubic-bezier(.2, .9, .25, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
+/* karty na nástenke: každá má vlastné meno, takže pri zmene stavu prejde na nové miesto */
+.vt-cards .card { view-transition-name: var(--vtn); }
+html.vt-cards::view-transition-group(*) { animation-duration: .5s; animation-timing-function: cubic-bezier(.3, 1.2, .5, 1); }
+/* karta → stránka zákazky: rám sa zväčší, obsah sa odkryje, nadpis sa presunie */
+::view-transition-group(woi-morph) { overflow: hidden; border-radius: 14px; background: var(--ink); box-shadow: var(--pop-shadow); animation-duration: .5s; animation-timing-function: cubic-bezier(.2, .9, .25, 1); }
+::view-transition-old(woi-morph), ::view-transition-new(woi-morph) { inline-size: auto; block-size: auto; height: auto; object-fit: none; object-position: 0 0; }
+::view-transition-old(woi-morph) { animation: vt-out .2s ease both; }
+::view-transition-new(woi-morph) { animation: vt-in .26s .06s ease both; }
+::view-transition-group(woi-title) { animation-duration: .5s; animation-timing-function: cubic-bezier(.2, .9, .25, 1); }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; } }
+/* tlačidlo → okno novej zákazky */
+html.vt-sheet :is(.modal, .modal-wrap), .modal-wrap.morphed:not(.closing), .modal-wrap.morphed:not(.closing) .modal { animation: none !important; }
+::view-transition-group(woi-sheet) { overflow: hidden; border-radius: 14px; background: var(--panel); box-shadow: var(--pop-shadow); animation-duration: .46s; animation-timing-function: cubic-bezier(.25, 1.1, .4, 1); }
+::view-transition-old(woi-sheet), ::view-transition-new(woi-sheet) { inline-size: auto; block-size: auto; height: auto; object-fit: none; object-position: 0 0; }
+::view-transition-old(woi-sheet) { animation: vt-out .16s ease both; }
+::view-transition-new(woi-sheet) { animation: vt-in .24s .08s ease both; }
+:root[data-motion="calm"]::view-transition-group(*) { animation-duration: .24s; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+.pb-src { display: none !important; }
+/* plávajúce okno spotlightu je priehľadné, materiál by prepúšťal plochu: tam plná farba */
+.spot-window .spot { background: var(--panel) !important; }
+
+/* ---------- záložky: obsah sa posunie ako stránka ---------- */
+:root[data-theme="clean"] .id-tabs { position: relative; isolation: isolate; background: var(--fill2); border: 0; border-radius: 10px; padding: 3px; gap: 0; }
+:root[data-theme="clean"] .id-tabs button { position: relative; z-index: 1; background: transparent !important; box-shadow: none !important; color: var(--muted); border-radius: 8px; padding: 6px 14px; font-weight: 560; transition: color .2s; }
+:root[data-theme="clean"] .id-tabs button.on { color: var(--text); }
+html.vt-slide::view-transition-group(woi-slide) { overflow: hidden; animation-duration: .4s; animation-timing-function: cubic-bezier(.25, 1, .35, 1); }
+html.vt-slide::view-transition-old(woi-slide), html.vt-slide::view-transition-new(woi-slide) { inline-size: auto; block-size: auto; height: auto; object-fit: none; object-position: 0 0; mix-blend-mode: normal; }
+html.vt-slide::view-transition-old(woi-slide) { animation: woi-slide-out .32s cubic-bezier(.4, 0, .7, .6) both; }
+html.vt-slide::view-transition-new(woi-slide) { animation: woi-slide-in .46s .04s cubic-bezier(.2, .9, .3, 1) both; }
+@keyframes woi-slide-out { to { transform: translateX(calc(var(--slide-dir, 1) * -28%)); opacity: 0; } }
+@keyframes woi-slide-in { from { transform: translateX(calc(var(--slide-dir, 1) * 32%)); opacity: 0; } }
+/* prepnutie stránky v menu: obsah príde zo smeru, kam si sa posunul */
+:root[data-theme="clean"] .view.enter { animation: woi-view-in .38s cubic-bezier(.2, .9, .3, 1); }
+@keyframes woi-view-in { from { opacity: 0; transform: translateY(calc(var(--view-dir, 1) * 14px)); } }
+:root[data-theme="clean"] .id-tabs .seg-thumb { top: 3px; bottom: 3px; border-radius: 8px; }
+
+/* ---------- výber farby ---------- */
+input[type=color] { -webkit-appearance: none; appearance: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; box-shadow: 0 0 0 1px rgba(127, 127, 127, .35), 0 1px 3px rgba(0, 0, 0, .15); transition: transform .2s cubic-bezier(.3, 1.5, .5, 1); }
+input[type=color]:hover { transform: scale(1.08); }
+input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type=color]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.cpick { position: fixed; z-index: 400; width: 236px; padding: 12px; border-radius: 14px; background: var(--panel, #2c2c2e); border: 1px solid var(--line-soft, rgba(127,127,127,.2)); box-shadow: var(--pop-shadow, 0 18px 50px rgba(0,0,0,.35)); display: flex; flex-direction: column; gap: 10px; transform-origin: var(--ox, 50%) var(--oy, 0); animation: cp-in .2s cubic-bezier(.3, 1.3, .5, 1); }
+.cpick.out { animation: cp-out .14s ease-in forwards; }
+@keyframes cp-in { from { opacity: 0; transform: scale(.92) translateY(-4px); } }
+@keyframes cp-out { to { opacity: 0; transform: scale(.95); } }
+.cp-sv { position: relative; height: 140px; border-radius: 9px; cursor: crosshair; touch-action: none; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, var(--hue, red)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+.cp-knob { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .35); pointer-events: none; }
+.cp-hue { -webkit-appearance: none; appearance: none; width: 100%; height: 12px; margin: 0; border-radius: 6px; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); outline: 0; cursor: pointer; }
+.cp-hue::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .25), 0 2px 5px rgba(0, 0, 0, .3); }
+.cp-row { display: flex; align-items: center; gap: 6px; background: var(--fill, rgba(127,127,127,.12)); border-radius: 8px; padding: 4px 8px 4px 4px; }
+.cp-prev { width: 22px; height: 22px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); flex: none; }
+.cp-hash { color: var(--muted); font: 500 13px var(--tc, ui-monospace, monospace); }
+.cp-hex { flex: 1; min-width: 0; border: 0; background: none; outline: 0; color: var(--text); font: 500 13px var(--tc, ui-monospace, monospace); letter-spacing: .04em; padding: 3px 0; }
+.cp-sw { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; }
+.cp-sw button { aspect-ratio: 1; width: 100%; border: 0; padding: 0; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(127, 127, 127, .3); cursor: pointer; transition: transform .15s; }
+.cp-sw button:hover { transform: scale(1.12); }
+.cp-sw button.on { box-shadow: 0 0 0 2px var(--panel, #2c2c2e), 0 0 0 4px var(--accent); }
+/* farby Kita v šatníku: ako riadky nastavení */
+.wr-colors { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; }
+.wr-colors label { justify-content: space-between; flex-direction: row-reverse; background: var(--fill, rgba(127,127,127,.12)); border-radius: 10px; padding: 8px 10px; color: var(--text) !important; cursor: pointer; }
+
+/* vlastná farba = dúhové koliesko (ako na Macu), nie štvorček so zvolenou farbou */
+.sk-custom, input[type=color].cw-wheel {
+  background: radial-gradient(circle, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, .5) 22%, rgba(255, 255, 255, 0) 58%),
+    conic-gradient(from 0deg, #ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #007aff, #5856d6, #af52de, #ff2d55, #ff3b30) !important;
+  border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12) !important;
+}
+.sk-custom input[type=color] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0 !important; box-shadow: none; transform: none; }
+input[type=color].cw-wheel { width: 30px; height: 30px; border: 2px solid transparent; }
+input[type=color].cw-wheel::-webkit-color-swatch { opacity: 0; }
+input[type=color].cw-wheel.on { border-color: var(--text); box-shadow: inset 0 0 0 3px var(--ink) !important; }
+:root body.spot-window, :root[data-theme] body.spot-window { background: transparent !important; }
+:root[data-theme] body.spot-window .spot { background: var(--panel) !important; backdrop-filter: none !important; }
+
+/* Kitova karta v Čistej: biela/tmavá karta s tieňom */
+:root[data-theme="clean"] .side .buddy { background: var(--panel); border: 0; box-shadow: var(--card-shadow); }
+:root[data-theme="clean"] .side .mascot .kit { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .18)); }
+:root[data-theme="clean"] .rec-dot { border-color: var(--fill2); }
+:root[data-theme="clean"] .side .side-foot i { background: linear-gradient(90deg, var(--accent) var(--p), var(--fill) var(--p)); }
