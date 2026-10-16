@@ -52,6 +52,14 @@ function start(opts) {
         return json(res, 200, issue(user));
       }
     }
+    if (u.pathname === '/auth/v1/user' && req.method === 'PUT') {
+      const user = userOf(req);
+      if (!user) return json(res, 401, { code: 'bad_jwt', msg: 'invalid JWT' });
+      const p = b();
+      if (p.password === user.password) return json(res, 422, { code: 'same_password', msg: 'New password should be different from the old password.' });
+      user.password = p.password;
+      return json(res, 200, { id: user.id, email: user.email });
+    }
     if (u.pathname === '/auth/v1/logout') { db.tokens.delete(String(req.headers.authorization || '').replace(/^Bearer /, '')); return json(res, 204); }
 
     // ---- tabuľka

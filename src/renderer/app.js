@@ -2161,7 +2161,12 @@
         <div class="box-in" style="margin-top:14px"><b>${t('Ďalšie zariadenie')}</b><p class="hint" style="margin:4px 0 10px">${t('Na inom PC: Nastavenia → Online databáza → Mám už databázu, vlož tento kód a prihlás sa. Heslo v kóde nie je.')}</p>
           <div class="code-row"><input readonly value="${esc(c.code || '')}" id="clCode"><button class="btn small" data-cl="copycode">${t('Kopírovať kód')}</button></div>
           <div id="clQr" class="cl-qr"></div></div>
-        <div class="row-btns" style="margin-top:12px"><button class="btn ghost small" data-cl="logout">${t('Odhlásiť')}</button><button class="btn ghost small" data-cl="disconnect">${t('Odpojiť databázu')}</button></div>`;
+        <div class="row-btns" style="margin-top:12px"><button class="btn ghost small" data-cl="pass">${t('Zmeniť heslo')}</button><button class="btn ghost small" data-cl="logout">${t('Odhlásiť')}</button><button class="btn ghost small" data-cl="disconnect">${t('Odpojiť databázu')}</button></div>
+        <div class="box-in" id="clPassBox" hidden style="margin-top:10px"><b>${t('Nové heslo')}</b><p class="hint" style="margin:4px 0 10px">${t('Platí pre všetky zariadenia aj mobil. Toto PC ostane prihlásené.')}</p>
+          <div class="field"><input type="password" id="clNew1" placeholder="${t('Nové heslo (aspoň 8 znakov)')}" autocomplete="new-password"></div>
+          <div class="field" style="margin-top:8px"><input type="password" id="clNew2" placeholder="${t('Ešte raz pre kontrolu')}" autocomplete="new-password"></div>
+          <div class="err" id="clPassErr" style="color:var(--rec);min-height:1.2em;margin-top:6px;font-size:12.5px"></div>
+          <div class="row-btns"><button class="btn primary small" data-cl="passsave">${t('Uložiť heslo')}</button></div></div>`;
       act('syncQr').then(q => { const el2 = $('#clQr'); if (!el2) return; el2.innerHTML = q ? `<img src="${q.qr}" alt="${t('QR kód pre mobil')}"><div><b>${t('Mobil')}</b><p class="hint">${t('Naskenuj kód, prihlás sa a pridaj si stránku na plochu. Funguje aj bez zapnutého PC.')}</p></div>` : `<p class="hint">${t('Mobilnú stránku zapneš pri vydaní appky (návod vo VYDANIE.md).')}</p>`; }).catch(() => { });
     }
     $$('[data-cl]', box).forEach(b => b.onclick = async () => {
@@ -2170,6 +2175,17 @@
       if (k === 'have') return cloudHave();
       if (k === 'now') { b.disabled = true; renderCloud(await act('syncNow').catch(() => null)); return; }
       if (k === 'copycode') { await act('writeClipboard', { text: c.code }); toast(t('Kód je v schránke.'), { icon: 'copy' }); return; }
+      if (k === 'pass') { const pb = $('#clPassBox'); pb.hidden = !pb.hidden; if (!pb.hidden) $('#clNew1').focus(); return; }
+      if (k === 'passsave') {
+        const p1 = $('#clNew1').value, p2 = $('#clNew2').value, err = $('#clPassErr');
+        err.textContent = '';
+        if (p1.length < 8) { err.textContent = t('Heslo musí mať aspoň 8 znakov.'); return; }
+        if (p1 !== p2) { err.textContent = t('Heslá sa nezhodujú.'); return; }
+        b.disabled = true;
+        try { await api.action('syncPassword', { password: p1 }); toast(t('Heslo je zmenené. Na mobile sa prihlás novým.'), { icon: '🔑' }); $('#clPassBox').hidden = true; $('#clNew1').value = $('#clNew2').value = ''; }
+        catch (e) { err.textContent = e.message; }
+        b.disabled = false; return;
+      }
       if (k === 'logout') { await act('syncLogout'); toast(t('Odhlásené. Dáta na tomto PC ostali.')); return renderCloud(); }
       if (k === 'disconnect') {
         if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = t('Naozaj odpojiť?'); setTimeout(() => { b.dataset.armed = ''; b.textContent = t('Odpojiť databázu'); }, 3500); return; }

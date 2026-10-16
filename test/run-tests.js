@@ -669,6 +669,18 @@ const HAS_FONT = ['bricolage-grotesque', 'inter'].every(f => fs.existsSync(path.
       assert.ok(!mem['woi-cloud'], 'po odhlásení v telefóne nič neostane');
       for (const k of ['window', 'WOI', 'SyncModel', 'SB', 'localStorage', 'location', 'history', 'document', 'Cloud']) delete global[k];
     });
+    await test('zmena hesla z PC: mobil sa prihlási novým, staré už nejde', async () => {
+      await assert.rejects(() => A.sync.changePassword('kratke'), /aspoň 8/);
+      await assert.rejects(() => A.sync.changePassword('heslo-1234'), /iné ako to súčasné/);
+      await A.sync.changePassword('nove-heslo-5678');
+      // ďalšie zariadenie (napr. mobil) sa prihlasuje rovnako
+      const other = require('../src/shared/sbclient.js').create({ url: A.sync.cfg.url, key: A.sync.cfg.key, fetch: A.sync.fetch });
+      await assert.rejects(() => other.signIn('tester@example.com', 'heslo-1234'), /heslo/i);
+      await other.signIn('tester@example.com', 'nove-heslo-5678');
+      assert.ok(other.session && other.session.access_token);
+      assert.ok(A.sync.sb.session, 'PC ostalo prihlásené');
+      await A.sync.syncNow();
+    });
     await test('nová prázdna databáza na tej istej adrese: PC pošle všetko znova', async () => {
       Object.assign(sbs.db, { users: [], items: new Map(), files: new Map(), tokens: new Map(), refresh: new Map() });
       await B.sync.connect({ code: A.sync.connectionCode() });

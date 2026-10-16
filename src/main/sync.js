@@ -114,6 +114,13 @@ class Sync extends EventEmitter {
     this.cfg.email = email; this.cfg.cursor = null; this._save();
     return this.syncNow({ first: true });
   }
+  async changePassword(password) {
+    if (!this.sb || !this.sb.session) throw new Error(t('Nie si prihlásený.'));
+    if (String(password || '').length < 8) throw new Error(t('Heslo musí mať aspoň 8 znakov.'));
+    await this.sb.setPassword(password);
+    this._save();
+    return true;
+  }
   async logout() {
     if (this.sb) await this.sb.signOut();
     this.cfg.session = null; this.cfg.synced = {}; this.cfg.cursor = null; this.cfg.refs = {}; this.cfg.files = {};

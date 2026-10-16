@@ -21,6 +21,7 @@
     if (/email not confirmed/i.test(msg)) return new SbError(t('E-mail ešte nie je potvrdený.'), 'unconfirmed', status);
     if (/už má majiteľa|already has an owner|woi_owner_only|Database error saving new user/i.test(msg)) return new SbError(t('Táto databáza už má majiteľa. Prihlás sa jeho e-mailom.'), 'owner', status);
     if (/already registered|user_already_exists/i.test(msg + code)) return new SbError(t('Účet s týmto e-mailom už existuje. Prihlás sa.'), 'exists', status);
+    if (/same_password|different from the old/i.test(msg + code)) return new SbError(t('Nové heslo musí byť iné ako to súčasné.'), 'same', status);
     if (/password/i.test(msg) && /(at least|short|weak)/i.test(msg)) return new SbError(t('Heslo je príliš slabé, daj aspoň 8 znakov.'), 'weak', status);
     if (status === 404 || /42P01|does not exist|relation .* does not exist|PGRST205|schema cache/i.test(msg + code)) return new SbError(t('V databáze chýba tabuľka WorkingOnIt. Spusti pripravený SQL kód.'), 'schema', status);
     if (status === 401 && /jwt|expired/i.test(msg)) return new SbError(t('Prihlásenie vypršalo.'), 'expired', status);
@@ -80,6 +81,10 @@
     async function signIn(email, password) {
       return setSession(await call('/auth/v1/token?grant_type=password', { method: 'POST', json: { email, password }, auth: false }));
     }
+    /* nové heslo pre prihláseného (napr. keď si ho na mobile nepamätáš, PC je prihlásené) */
+    async function setPassword(password) {
+      return authed('/auth/v1/user', { method: 'PUT', json: { password } });
+    }
     async function refresh() {
       if (!session || !session.refresh_token) throw new SbError(t('Nie si prihlásený.'), 'signedout');
       try { return setSession(await call('/auth/v1/token?grant_type=refresh_token', { method: 'POST', json: { refresh_token: session.refresh_token }, auth: false })); }
@@ -136,7 +141,7 @@
       url, key,
       get session() { return session; },
       get user() { return session && session.user; },
-      setSession, signUp, signIn, signOut, refresh, ensure, pull, push, probe, upload, download, call
+      setSession, signUp, signIn, signOut, setPassword, refresh, ensure, pull, push, probe, upload, download, call
     };
   }
 

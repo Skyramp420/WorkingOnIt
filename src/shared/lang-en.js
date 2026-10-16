@@ -1640,4 +1640,14 @@
   'Meriam čas, ale neviem pre ktorú zákazku. Klikni na krúžok hore a vyber ju.': 'I’m tracking time but don’t know which job it’s for. Click the circle above and pick it.',
   // ---------- test appka ----------
   'Testovacia verzia zo Spustit.bat, má vlastné dáta oddelené od nainštalovanej appky': 'Test version from Spustit.bat, with its own data kept separate from the installed app',
+  // ---------- zmena hesla ----------
+  'Nové heslo musí byť iné ako to súčasné.': 'The new password must be different from the current one.',
+  'Zmeniť heslo': 'Change password',
+  'Nové heslo': 'New password',
+  'Platí pre všetky zariadenia aj mobil. Toto PC ostane prihlásené.': 'Works on all devices and your phone. This PC stays signed in.',
+  'Nové heslo (aspoň 8 znakov)': 'New password (at least 8 characters)',
+  'Ešte raz pre kontrolu': 'Once more to check',
+  'Heslá sa nezhodujú.': 'The passwords don’t match.',
+  'Uložiť heslo': 'Save password',
+  'Heslo je zmenené. Na mobile sa prihlás novým.': 'Password changed. Sign in with the new one on your phone.',
 });

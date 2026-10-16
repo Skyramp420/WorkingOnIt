@@ -360,6 +360,7 @@ async function runAction(type, p = {}, source = 'app') {
     case 'syncLogin': return sync.login(String(p.email || '').trim(), String(p.password || ''));
     case 'syncNow': return sync.syncNow();
     case 'syncLogout': await sync.logout(); return true;
+    case 'syncPassword': return sync.changePassword(String(p.password || ''));
     case 'syncDisconnect': await sync.disconnect(); return true;
     case 'syncCopySql': await Clip.writeText(fs.readFileSync(path.join(__dirname, 'sql', I18N.lang === 'en' ? 'setup.en.sql' : 'setup.sql'), 'utf8')); return true;
     case 'syncQr': {
