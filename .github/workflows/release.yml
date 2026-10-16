@@ -5,6 +5,8 @@ name: Vydanie
 on:
   push:
     tags: ['v*']
+  # alebo ručne: záložka Actions → Vydanie → Run workflow (verzia sa zoberie z package.json)
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -33,6 +35,12 @@ jobs:
         if: env.SKIP != 'true'
         run: node test/run-tests.js
 
+      - name: Beta verzia?
+        if: env.SKIP != 'true'
+        shell: bash
+        # verzia s pomlčkou (napr. 1.7.0-beta.1) ide ako prerelease: dostanú ju len tí, čo si zapli beta verzie
+        run: echo "EP_PRE_RELEASE=$(node -p "require('./package.json').version.includes('-')")" >> "$GITHUB_ENV"
+
       - name: Adresa mobilnej verzie
         if: env.SKIP != 'true'
         run: node scripts/mobile-url.js
@@ -42,8 +50,6 @@ jobs:
         run: npx electron-builder --win nsis --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # testovacie verzie (tag s pomlčkou, napr. v1.7.0-beta.1) idú ako prerelease: dostanú ich len tí, čo si zapli beta verzie
-          EP_PRE_RELEASE: ${{ contains(github.ref_name, '-') }}
           # Podpisovanie (keď ho budeš mať, viď VYDANIE.md):
           # Azure Artifact Signing
           # AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
