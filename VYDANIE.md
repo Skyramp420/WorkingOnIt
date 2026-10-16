@@ -39,6 +39,8 @@ Ty nedržíš žiadne dáta používateľov. Tvoja práca je len vydávať nové
 3. Značka: *History*, pravý klik na posledný commit, *Create Tag…*, napíš `v1.6.1` (s malým v), potom znova *Push origin*. Značky sa pošlú s ním.
 4. Na GitHube v záložke **Actions** uvidíš, ako to beží (zhruba 10 minút). Keď je to zelené, v **Releases** je `WorkingOnIt-Setup-1.6.1.exe` a appky si ju začnú sťahovať.
 
+Namiesto značky môžeš vydanie spustiť aj ručne: na GitHube záložka **Actions → Vydanie → Run workflow**. Verzia sa zoberie z `package.json` a značku si vydanie vytvorí samo.
+
 Nová verzia sa ukáže ľuďom, keď je vydanie hotové. Rozpracované zmeny bez značky nikomu nič nespravia, takže môžeš pushovať koľko chceš.
 
 ### Testovacie (beta) verzie
