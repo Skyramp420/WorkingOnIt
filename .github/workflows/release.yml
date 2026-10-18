@@ -41,13 +41,19 @@ jobs:
         # verzia s pomlčkou (napr. 1.7.0-beta.1) ide ako prerelease: dostanú ju len tí, čo si zapli beta verzie
         run: echo "EP_PRE_RELEASE=$(node -p "require('./package.json').version.includes('-')")" >> "$GITHUB_ENV"
 
-      - name: Značka verzie
-        # pri ručnom spustení (Run workflow) značka ešte neexistuje a GitHub bez nej vydanie nezverejní
-        if: env.SKIP != 'true' && github.ref_type != 'tag'
+      - name: Vydanie na GitHube
+        # vydanie (aj so značkou) vytvoríme vopred jedno; inak ho electron-builder pri súbežnom nahrávaní
+        # vytvorí dvakrát a appky potom nenájdu latest.yml
+        if: env.SKIP != 'true'
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           V="v$(node -p "require('./package.json').version")"
-          if git ls-remote --exit-code --tags origin "refs/tags/$V" >/dev/null; then echo "Značka $V už existuje"; else git tag "$V" && git push origin "refs/tags/$V"; fi
+          if gh release view "$V" >/dev/null 2>&1; then echo "Vydanie $V už existuje"; else
+            PRE=""; if [ "$EP_PRE_RELEASE" = "true" ]; then PRE="--prerelease"; fi
+            gh release create "$V" --title "$V" --notes "WorkingOnIt $V" --target "$GITHUB_SHA" $PRE
+          fi
 
       - name: Adresa mobilnej verzie
         if: env.SKIP != 'true'

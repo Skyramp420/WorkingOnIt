@@ -1650,4 +1650,7 @@
   'Heslá sa nezhodujú.': 'The passwords don’t match.',
   'Uložiť heslo': 'Save password',
   'Heslo je zmenené. Na mobile sa prihlás novým.': 'Password changed. Sign in with the new one on your phone.',
+  // ---------- ffmpeg na požiadanie ----------
+  'ffmpeg sa nepodarilo stiahnuť, skontroluj internet.': 'Couldn’t download ffmpeg, check your internet connection.',
+  'ffmpeg sa nepodarilo stiahnuť ({status}). Skús to neskôr.': 'Couldn’t download ffmpeg ({status}). Try again later.',
 });

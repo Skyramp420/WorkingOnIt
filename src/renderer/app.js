@@ -56,6 +56,18 @@
   const localDone = new Map();
   Look.apply(S.settings);
   Polish.start();
+  /* šetrenie: keď appka nie je v popredí (strihaš v inom programe) alebo na ňu 2 minúty nesiahneš,
+     nekonečné animácie (Kit, pulzujúce bodky) stoja. Procesor a grafika potom nerobia nič. */
+  (() => {
+    let lastInput = Date.now();
+    const update = () => document.body.classList.toggle('bg', document.hidden || !document.hasFocus() || Date.now() - lastInput > 120000);
+    const poke = () => { lastInput = Date.now(); if (document.body.classList.contains('bg')) update(); };
+    ['pointermove', 'pointerdown', 'keydown', 'wheel'].forEach(e => addEventListener(e, poke, { passive: true, capture: true }));
+    addEventListener('focus', update); addEventListener('blur', update);
+    document.addEventListener('visibilitychange', update);
+    setInterval(update, 30000);
+    update();
+  })();
   // testovacia appka (Spustit.bat) má vlastné dáta, nech sa nedá pomýliť s nainštalovanou
   api.action('appInfo').then(i => {
     if (!i || !i.test) return;

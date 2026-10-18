@@ -57,10 +57,25 @@ function send(channel, data) {
 }
 
 function showWindow(then) {
-  if (!win) createWindow();
+  if (!win || win.isDestroyed()) {
+    createWindow();
+    if (then) win.webContents.once('did-finish-load', () => setTimeout(() => send('event', then), 300));
+    return;
+  }
   if (win.isMinimized()) win.restore();
   win.show(); win.focus();
   if (then) send('event', then);
+}
+/* okno schované do lišty dlhšie ako 10 minút sa zatvorí celé (uvoľní ~150 MB RAM a grafiku).
+   Meranie času, rendery a synchronizácia bežia ďalej v hlavnom procese, pri otvorení sa okno postaví znova. */
+let winSleep = null;
+function sleepLater() {
+  clearTimeout(winSleep);
+  winSleep = setTimeout(() => {
+    if (!win || win.isDestroyed() || win.isVisible()) return;
+    log.info('okno uspané (schované 10 min)');
+    const w = win; win = null; w.destroy();
+  }, Number(process.env.WOI_SLEEP_MS) || 10 * 60000);
 }
 
 function notify(title, body, onClick) {
@@ -560,10 +575,14 @@ function createWindow(hidden) {
   win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(Number(store.get().settings.zoom) || 1));
   const maxState = () => send('event', { type: 'maximized', value: win.isMaximized() });
   win.on('maximize', maxState); win.on('unmaximize', maxState);
+  win.on('hide', sleepLater);
+  win.on('show', () => clearTimeout(winSleep));
+  win.on('closed', () => { win = null; });
+  if (hidden) sleepLater();
 
   win.on('close', e => {
     if (quitting) return;
-    if (store.get().settings.closeAction === 'quit') { quitting = true; return; }
+    if (store.get().settings.closeAction === 'quit') { quitting = true; setImmediate(() => app.quit()); return; }
     e.preventDefault();
     win.hide();
     if (!store.get().notified.trayHint) {
@@ -725,16 +744,28 @@ function createSpotlight() {
   spot.setAlwaysOnTop(true, 'screen-saver');
   spot.loadFile(path.join(ROOT, 'src', 'renderer', 'spotlight.html'));
   spot.on('blur', () => hideSpotlight());
+  spot.on('closed', () => { spot = null; });
 }
+/* spotlight sa vytvorí až pri prvom použití a po 15 minútach bez použitia sa zatvorí (šetrí asi 70 MB RAM) */
+let spotIdle = null;
 function showSpotlight() {
-  if (!spot || spot.isDestroyed()) createSpotlight();
+  clearTimeout(spotIdle);
+  if (!spot || spot.isDestroyed()) {
+    createSpotlight();
+    spot.once('ready-to-show', () => showSpotlight());
+    return;
+  }
   const { screen } = require('electron');
   const d = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
   spot.setBounds({ x: Math.round(d.x + (d.width - 760) / 2), y: Math.round(d.y + d.height * 0.16), width: 760, height: 520 });
   spot.show(); spot.focus();
   Clip.readText().then(txt => { if (spot && !spot.isDestroyed()) spot.webContents.send('event', { type: 'spotlightOpen', clipboard: txt.slice(0, 4000) }); }).catch(() => { });
 }
-function hideSpotlight() { if (spot && !spot.isDestroyed() && spot.isVisible()) spot.hide(); }
+function hideSpotlight() {
+  if (spot && !spot.isDestroyed() && spot.isVisible()) spot.hide();
+  clearTimeout(spotIdle);
+  spotIdle = setTimeout(() => { if (spot && !spot.isDestroyed() && !spot.isVisible()) spot.destroy(); }, Number(process.env.WOI_SLEEP_MS) || 15 * 60000);
+}
 
 function registerHotkeys() {
   globalShortcut.unregisterAll();
@@ -854,7 +885,6 @@ app.whenReady().then(() => {
   sync.start();
 
   registerHotkeys();
-  setTimeout(createSpotlight, 1500);
 
   // aktualizácie: kontrola po štarte a potom každé 4 hodiny (len v nainštalovanej verzii)
   U.init({ send, getSettings: () => store.get().settings, notify: (title, b) => notify(title, b, () => send('event', { type: 'go', view: 'settings', anchor: 'about' })) });

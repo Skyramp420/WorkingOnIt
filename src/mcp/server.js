@@ -15,7 +15,7 @@ const t = (s, v) => I18N.t(s, v);
 const EN = () => I18N.lang === 'en';
 const q = s => EN() ? '“' + s + '”' : '„' + s + '“';
 
-const VERSION = '1.6.1';
+const VERSION = '1.6.2';
 const DATA_DIR = process.env.WOI_DATA || path.join(process.env.APPDATA || path.join(os.homedir(), '.config'), 'WorkingOnIt');
 const API_PORT = 47480;
 const log = (...a) => process.stderr.write('[workingonit-mcp] ' + a.join(' ') + '\n');
@@ -81,12 +81,37 @@ function projectLine(state, p) {
 }
 
 /* ---------- ffmpeg ---------- */
-function ffmpegPath() {
-  try {
-    let p = require('ffmpeg-static');
-    if (p) { p = p.replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep); if (fs.existsSync(p)) return p; }
-  } catch (e) { }
-  return 'ffmpeg';
+/* ffmpeg nie je v inštalačke (má 80 MB a treba ho len na pozeranie videí cez Claude).
+   Použije sa ten v systéme, inak sa pri prvom použití raz stiahne (asi 30 MB) k dátam appky. */
+const FFMPEG_URL = `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-${process.platform}-${process.arch}.gz`;
+const localFfmpeg = () => path.join(DATA_DIR, 'bin', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+let ffSystem = null, ffDownload = null;
+function systemFfmpeg() {
+  if (ffSystem === null) {
+    try { ffSystem = require('child_process').spawnSync('ffmpeg', ['-version'], { windowsHide: true, timeout: 5000 }).status === 0; }
+    catch (e) { ffSystem = false; }
+  }
+  return ffSystem;
+}
+async function downloadFfmpeg(dest) {
+  let r;
+  try { r = await fetch(FFMPEG_URL); } catch (e) { throw new Error(t('ffmpeg sa nepodarilo stiahnuť, skontroluj internet.')); }
+  if (!r.ok) throw new Error(t('ffmpeg sa nepodarilo stiahnuť ({status}). Skús to neskôr.', { status: r.status }));
+  const bin = require('zlib').gunzipSync(Buffer.from(await r.arrayBuffer()));
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  const tmp = dest + '.part';
+  fs.writeFileSync(tmp, bin);
+  if (process.platform !== 'win32') fs.chmodSync(tmp, 0o755);
+  fs.renameSync(tmp, dest);
+}
+async function ffmpegPath() {
+  if (process.env.FFMPEG_BIN) return process.env.FFMPEG_BIN;
+  const p = localFfmpeg();
+  if (fs.existsSync(p)) return p;
+  if (systemFfmpeg()) return 'ffmpeg';
+  if (!ffDownload) ffDownload = downloadFfmpeg(p).finally(() => { ffDownload = null; });
+  await ffDownload;
+  return p;
 }
 function run(bin, args, opts) {
   return new Promise((resolve, reject) => {
@@ -99,7 +124,7 @@ function run(bin, args, opts) {
   });
 }
 async function probe(file) {
-  const r = await run(ffmpegPath(), ['-hide_banner', '-i', file]);
+  const r = await run(await ffmpegPath(), ['-hide_banner', '-i', file]);
   const s = r.stderr;
   const dur = s.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
   const vid = s.match(/Stream[^\n]*Video:\s*([^,\s]+)[^\n]*?,\s*(\d{2,5})x(\d{2,5})/);
@@ -113,7 +138,7 @@ async function probe(file) {
   };
 }
 async function frameAt(file, at, width) {
-  const r = await run(ffmpegPath(), ['-hide_banner', '-loglevel', 'error', '-ss', String(Math.max(0, at)), '-i', file, '-frames:v', '1',
+  const r = await run(await ffmpegPath(), ['-hide_banner', '-loglevel', 'error', '-ss', String(Math.max(0, at)), '-i', file, '-frames:v', '1',
     '-vf', `scale='min(${width},iw)':-2`, '-f', 'image2pipe', '-vcodec', 'mjpeg', '-q:v', '5', 'pipe:1']);
   if (!r.stdout.length) throw new Error(t('Snímku v čase {sec} s sa nepodarilo vytiahnuť.', { sec: at.toFixed(2) }) + ' ' + r.stderr.slice(0, 200));
   return r.stdout;
