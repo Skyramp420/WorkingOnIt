@@ -15,7 +15,7 @@ const t = (s, v) => I18N.t(s, v);
 const EN = () => I18N.lang === 'en';
 const q = s => EN() ? '“' + s + '”' : '„' + s + '“';
 
-const VERSION = '1.6.2';
+const VERSION = '1.6.3';
 const DATA_DIR = process.env.WOI_DATA || path.join(process.env.APPDATA || path.join(os.homedir(), '.config'), 'WorkingOnIt');
 const API_PORT = 47480;
 const log = (...a) => process.stderr.write('[workingonit-mcp] ' + a.join(' ') + '\n');

@@ -90,8 +90,10 @@ function findExe(custom) {
   return null;
 }
 
-/* Spustí `ollama serve` potichu na pozadí (bez okna). Ollama potom beží ďalej,
-   aj keď WorkingOnIt zavrieš, presne ako keď ju spustí Windows pri štarte. */
+/* Spustí `ollama serve` potichu na pozadí (bez okna).
+   Pozor: nie „detached“. Odpojený proces na Windowse nemá vôbec konzolu, a tak každý pomocný proces,
+   ktorý si Ollama spustí (hľadanie grafiky, načítanie modelu), otvoril vlastné čierne okno CMD.
+   Takto má Ollama skrytú konzolu a jej pomocníci ju zdedia, takže sa neukáže nič. */
 let starting = null;
 async function ensureRunning({ autoStart = true, exe = '', logFile = '' } = {}) {
   const v = await version();
@@ -105,7 +107,7 @@ async function ensureRunning({ autoStart = true, exe = '', logFile = '' } = {}) 
       if (logFile) { fs.mkdirSync(path.dirname(logFile), { recursive: true }); out = fs.openSync(logFile, 'a'); }
     } catch (e) { out = 'ignore'; }
     try {
-      const child = spawn(bin, ['serve'], { detached: true, windowsHide: true, stdio: ['ignore', out, out], env: Object.assign({}, process.env) });
+      const child = spawn(bin, ['serve'], { detached: false, windowsHide: true, stdio: ['ignore', out, out], env: Object.assign({}, process.env) });
       child.on('error', () => { });
       child.unref();
     } catch (e) {

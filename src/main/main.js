@@ -889,12 +889,7 @@ app.whenReady().then(() => {
   // aktualizácie: kontrola po štarte a potom každé 4 hodiny (len v nainštalovanej verzii)
   U.init({ send, getSettings: () => store.get().settings, notify: (title, b) => notify(title, b, () => send('event', { type: 'go', view: 'settings', anchor: 'about' })) });
 
-  // lokálne AI: keď je zapnuté, Ollamu potichu spustíme, aby Kit odpovedal hneď
-  if (st.ollamaEnabled && st.ollamaAutoStart !== false) {
-    setTimeout(() => O.ensureRunning({ autoStart: true, exe: st.ollamaPath, logFile: ollamaLog() })
-      .then(r => log.info('ollama', r.running ? 'beží ' + r.version + (r.started ? ' (spustil som ju)' : '') : 'nebeží', r.error || ''))
-      .catch(e => log.warn('ollama', e.message)), 6000);
-  }
+  // lokálne AI sa pri štarte appky nespúšťa: Ollama sa zapne až vtedy, keď sa prvýkrát opýtaš Kita
 
   const checkDeadlines = () => {
     if (!store.get().settings.notifyDeadlines) return;
