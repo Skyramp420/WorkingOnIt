@@ -285,7 +285,7 @@ const HAS_FONT = ['bricolage-grotesque', 'inter'].every(f => fs.existsSync(path.
     const dir = store.project(id).folder;
     fs.writeFileSync(path.join(dir, '01_Footage', 'clip.mp4'), Buffer.alloc(1000));
     fs.writeFileSync(path.join(dir, '05_Renders', 'SkyForge_v1.mp4'), Buffer.alloc(5000));
-    await wait(9000);
+    await wait(13000);
     w.stop();
     assert.strictEqual(events.length, 1, 'počet renderov: ' + events.length);
     assert.strictEqual(events[0].project.id, id);

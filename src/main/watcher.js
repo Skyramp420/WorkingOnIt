@@ -75,19 +75,17 @@ class RenderWatcher extends EventEmitter {
       if (!parts.some(p => RENDER_DIR.test(p))) return;
     }
     if (this.pending.has(full)) return;
-    const entry = { last: -1, stableCount: 0, timer: null };
+    const entry = { last: -1, mtime: 0, stableCount: 0, timer: null };
     this.pending.set(full, entry);
     const check = () => {
       let st;
       try { st = fs.statSync(full); } catch (e) { this.pending.delete(full); return; }
-      if (st.size > 0 && st.size === entry.last) entry.stableCount++;
+      // súbor neotvárame (ani na skúšku), aby sme nezavadzali programu, ktorý ho práve zapisuje alebo číta:
+      // stačí, že sa veľkosť ani čas zmeny 3-krát po sebe nepohli
+      if (st.size > 0 && st.size === entry.last && st.mtimeMs === entry.mtime) entry.stableCount++;
       else entry.stableCount = 0;
-      entry.last = st.size;
-      let locked = false;
-      if (entry.stableCount >= 2) {
-        try { const fd = fs.openSync(full, 'r+'); fs.closeSync(fd); } catch (e) { locked = e.code === 'EBUSY' || e.code === 'EPERM'; }
-      }
-      if (entry.stableCount >= 2 && !locked) {
+      entry.last = st.size; entry.mtime = st.mtimeMs;
+      if (entry.stableCount >= 3) {
         this.pending.delete(full);
         this.finish(full, st);
       } else {

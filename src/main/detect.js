@@ -267,12 +267,13 @@ function capcutRecent(localAppData) {
 }
 /* After Effects: celé cesty posledných projektov z predvolieb (názov okna ukazuje len meno súboru) */
 function aeRecentPaths(appData) {
-  return cached('ae', 20000, () => {
+  // len hlavný súbor predvolieb (MRU je tam) a najviac raz za 5 minút, aby sme AE nechali na pokoji
+  return cached('ae', 5 * 60000, () => {
     const base = path.join(appData, 'Adobe', 'After Effects');
     let vers = []; try { vers = fs.readdirSync(base).filter(v => /^\d+(\.\d+)*$/.test(v)); } catch (e) { return []; }
     vers.sort((a, b) => parseFloat(b) - parseFloat(a));
     for (const v of vers.slice(0, 2)) {
-      let files = []; try { files = fs.readdirSync(path.join(base, v)).filter(f => /prefs.*\.txt$/i.test(f)); } catch (e) { continue; }
+      let files = []; try { files = fs.readdirSync(path.join(base, v)).filter(f => /prefs\.txt$/i.test(f)); } catch (e) { continue; }
       const out = [];
       for (const f of files) {
         let txt = ''; try { txt = fs.readFileSync(path.join(base, v, f), 'utf8'); } catch (e) { continue; }
